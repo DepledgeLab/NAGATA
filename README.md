@@ -4,7 +4,7 @@
 NAGATA uses Nanopore direct RNA sequencing reads aligned to a genome to produce a transcriptome annotation.
 ## Generating neccessary files
 
-### Bed file
+### ***Bed file***
 
 #### The Bed file is used to cluster sequences based on alignment similarity in an iterative manner. 
 To identify Transcriptional units, after an inital noise filter, NAGATA numerically sorts "start" positions and identifies row-by-row if the difference between current value and previous is < than the grouping value (sg), if this is true, the current sequence is assigned to this cluster. If the value is larger, then a new cluster is created and the process is repeated. 
@@ -19,13 +19,13 @@ minimap2 -ax splice -k14 -uf --secondary=no "genomic".fasta "dRNA-READS".fastq >
 bamToBed -bed12 -i "dRNA-READS.GENOMIC".sam > "dRNA-READS.GENOMIC".sam.bed
 ```
 
-### Cigar file
+### ***Cigar file***
 #### A cigar file is used to filter out 5' misaligned sequences prior to clustering. This step is important in preventing false TSSs in the final annotation.
 ##### Generating Cigar file
 ```
 samtools view "dRNA-READS.GENOMIC".sam | cut -f1,2,6 > "SEQUENCE.STRAND.CIGAR".txt
 ```
-### Nanopolish file
+### ***Nanopolish file***
 #### A nanopolish file containing per read estimates of poly-A tails is used to filter out reads with incorrectly mapped 3' ends due to technical errors.
 ##### Generating Nanopolish file
 ```
