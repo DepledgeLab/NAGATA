@@ -18,6 +18,20 @@ Once clustered have been identifed using "starts", NAGATA uses a similar algorit
 minimap2 -ax splice -k14 -uf --secondary=no "genomic".fasta "dRNA-READS".fastq > "dRNA-READS.GENOMIC".sam
 bamToBed -bed12 -i "dRNA-READS.GENOMIC".sam > "dRNA-READS.GENOMIC".sam.bed
 ```
+
+## Cigar file
+#### A cigar file is used to filter out 5' misaligned sequences prior to clustering. This step is important in preventing false TSSs in the final annotation.
+
+```
+samtools view "dRNA-READS.GENOMIC".sam | cut -f1,2,6 > "SEQUENCE.STRAND.CIGAR".txt
+```
+## Nanopolish file
+#### A nanopolish file containing per read estimates of poly-A tails is used to filter out reads with incorrectly mapped 3' ends due to technical errors.
+```
+nanopolish index -d "FAST5-READS" "dRNA-READS".fastq
+nanopolish polya --threads=8 --reads="dRNA-READS".fastq --bam="dRNA-READS.GENOMIC".bam --genome="genomic".fasta > "dRNA-READS".polyA.tsv
+```
+
 ## Running NAGATA
 ### Test command
 ```
