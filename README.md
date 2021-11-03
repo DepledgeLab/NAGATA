@@ -6,8 +6,8 @@ NAGATA uses Nanopore direct RNA sequencing reads aligned to a genome to produce 
 
 # Bed file
 ```
-minimap2 -ax splice -k14 -uf --secondary=no *genomic.fasta* *dRNA-reads.fastq* > *dRNA-reads.genome.sam*
-bamToBed -bed12 -i *dRNA-reads.genome.sam* > *dRNA-reads.genome.sam.bed*
+minimap2 -ax splice -k14 -uf --secondary=no GENOMIC.fasta dRNA-READS.fastq > dRNA-READS.GENOMIC.sam
+bamToBed -bed12 -i dRNA-READS.GENOMIC.sam > dRNA-READS.GENOMIC.sam.bed
 ```
 ## Running NAGATA
 ### Test command
