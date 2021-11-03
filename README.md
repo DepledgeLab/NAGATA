@@ -5,10 +5,15 @@ NAGATA uses Nanopore direct RNA sequencing reads aligned to a genome to produce 
 ## Generating neccessary files
 
 ## Bed file
+
 ### The Bed file is used to cluster sequences based on alignment similarity in an iterative manner. 
-To identify Transcriptional units, after an inital noise filter, NAGATA numerically sorts "start" positions and identifies row-by-row if the difference between current value and previous is < than the grouping value (sg), if this is true, the current sequence is assigned to this cluster. If the value is larger, then a new cluster is created and the process is repeated. Once clustered have been identifed using "starts", NAGATA uses a similar algorithm using "ends" within each cluster.
-![This is an image](/modules/TSS-example.png)
+To identify Transcriptional units, after an inital noise filter, NAGATA numerically sorts "start" positions and identifies row-by-row if the difference between current value and previous is < than the grouping value (sg), if this is true, the current sequence is assigned to this cluster. If the value is larger, then a new cluster is created and the process is repeated. 
+![TSS-example](/modules/TSS-example.png)
 ![Algorithm example](/modules/Grouping-TSS.pdf)
+
+Once clustered have been identifed using "starts", NAGATA uses a similar algorithm using "ends" within each cluster.
+![TES-example](/modules/TES-example.png)
+### Generating Bed file
 ```
 minimap2 -ax splice -k14 -uf --secondary=no "genomic".fasta "dRNA-READS".fastq > "dRNA-READS.GENOMIC".sam
 bamToBed -bed12 -i "dRNA-READS.GENOMIC".sam > "dRNA-READS.GENOMIC".sam.bed
