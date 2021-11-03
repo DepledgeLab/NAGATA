@@ -1,6 +1,8 @@
 # NAGATA
 ***Nanopore Augmented Genome and Transcriptome Annotation***
 
+NAGATA uses Nanopore direct RNA sequencing reads aligned to a genome to produce a transcriptome annotation.
+
 ## Running NAGATA
 ### Test command
 ```
