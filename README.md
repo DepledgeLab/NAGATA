@@ -2,12 +2,21 @@
 ***Nanopore Augmented Genome and Transcriptome Annotation***
 
 NAGATA uses Nanopore direct RNA sequencing reads aligned to a genome to produce a transcriptome annotation.
-## Generating neccessary files
+## Data Preparation
+### Required software
+Nanopolish v0.11.1 or higher
+MiniMap2 v2.15 or higher
+SAMtools v1.3 or higher
+BEDtools v2.26 or v2.27
 
-### ***Bed file***
+### ***BED12 file***
 
-#### The Bed file is used to cluster sequences based on alignment similarity in an iterative manner. 
-To identify Transcriptional units, after an inital noise filter, NAGATA numerically sorts "start" positions and identifies row-by-row if the difference between current value and previous is < than the grouping value (sg), if this is true, the current sequence is assigned to this cluster. If the value is larger, then a new cluster is created and the process is repeated. 
+#### BED12 files are used to cluster sequences based on alignment similarities in an iterative manner. 
+NAGATA parses read alignments to identify Transcriptional Units (TUs) by numerically sorting "start" and "end" positions and then grouping alignments with similar "start" and "end" co-ordinates. This is performed on a row-by-row basis 
+
+with a new TU defined only if the alignment co-ordinates of a given row differ from the previous row by greater than user-defined threshold (25 nt for transcription start sites (TSS), 50 nt for cleavage and polyadenylation sites (CPAS)). 
+
+, after an inital noise filter, NAGATA numerically sorts "start" positions and identifies row-by-row if the difference between current value and previous is < than the grouping value (sg), if this is true, the current sequence is assigned to this cluster. If the value is larger, then a new cluster is created and the process is repeated. 
 ![TSS-example](/modules/TSS-example.png)
 ![Algorithm example](/modules/Grouping-TSS.pdf)
 
@@ -19,18 +28,22 @@ minimap2 -ax splice -k14 -uf --secondary=no "genomic".fasta "dRNA-READS".fastq >
 bamToBed -bed12 -i "dRNA-READS.GENOMIC".sam > "dRNA-READS.GENOMIC".sam.bed
 ```
 
-### ***Cigar file***
-#### A cigar file is used to filter out 5' misaligned sequences prior to clustering. This step is important in preventing false TSSs in the final annotation.
-##### Generating Cigar file
+### ***CIGAR Report***
+#### CIGAR (Compact Idiosyncratic Gapped Alignment Report) strings for each read alignment are extracted and supplied to NAGATA to identify putative 5' alignment artefacts resulting from splice junctions. This step is critical for preventing artefact TSS identification.
+note - can we not automate this part?
+
+##### Generating CIGAR Report file
 ```
 samtools view "dRNA-READS.GENOMIC".sam | cut -f1,2,6 > "SEQUENCE.STRAND.CIGAR".txt
 ```
-### ***Nanopolish file***
-#### A nanopolish file containing per read estimates of poly-A tails is used to filter out reads with incorrectly mapped 3' ends due to technical errors.
+
+
+### ***Nanopolish poly(A) length estimation file***
+#### Nanopolish is used first to index-link reads in their fastq and fast5 formats, and subsequently to estimate the poly(A) tail length present in each read. NAGATA subsequently filters these data to exclude reads for which poly(A) tail lengths could not be reported as these produce incorrect 3' end alignments.
 ##### Generating Nanopolish file
 ```
-nanopolish index -d "FAST5-READS" "dRNA-READS".fastq
-nanopolish polya --threads=8 --reads="dRNA-READS".fastq --bam="dRNA-READS.GENOMIC".bam --genome="genomic".fasta > "dRNA-READS".polyA.tsv
+nanopolish index -d "dRNA-FAST5-READS" "dRNA-FASTQ-READS".fastq
+nanopolish polya --threads="n" --reads="dRNA-READS".fastq --bam="dRNA-READS.GENOMIC".bam --genome="genomic".fasta > "dRNA-READS".polyA.tsv
 ```
 
 ## Running NAGATA
@@ -52,3 +65,6 @@ python3 NAGATA.py -i test-dataset/Ad5-12h-24h.bed -o test-outs/ -n test-dataset/
 -c      Soft clipping value to filter lower quality reads (default: 12.5)
 -m      Minimum number of reads a cluster must have to be considered real (default: 20)
 ```
+
+## Troubleshooting
+
