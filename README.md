@@ -30,7 +30,7 @@ bamToBed -bed12 -i "dRNA-READS.GENOMIC".sam > "dRNA-READS.GENOMIC".sam.bed
 
 ### ***CIGAR Report***
 #### CIGAR (Compact Idiosyncratic Gapped Alignment Report) strings for each read alignment are extracted and supplied to NAGATA to identify putative 5' alignment artefacts resulting from splice junctions. This step is critical for preventing artefact TSS identification.
-note - can we not automate this part?
+note - can we not automate this part? - Yes. I will do it in a future version. This would require NAGATA to accept a BAM file instead of a BED file.
 
 ##### Generating CIGAR Report file
 ```
