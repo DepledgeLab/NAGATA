@@ -7,7 +7,7 @@ NAGATA uses Nanopore direct RNA sequencing reads aligned to a genome to produce 
 Nanopolish v0.11.1 or higher\
 MiniMap2 v2.15 or higher\
 SAMtools v1.3 or higher\
-BEDtools v2.26 or v2.27\
+BEDtools v2.26 or v2.27
 
 ### ***BED12 file***
 
