@@ -4,9 +4,12 @@ import modules.TSS_soft_clip_filter as TSS_soft_clip_filter
 import modules.TSS_grouping as TSS_grouping
 import modules.TES_grouping as TES_grouping
 import modules.isoform_grouping as iso_grouping
+import modules.help_functions as help_functions
 from collections import Counter
 import os
 import subprocess
+
+import sys
 
 strand_map = {'+':'fwd','-':'rev'}
 
@@ -39,8 +42,10 @@ def read_in_bed(bedfile,strand,retain_seqs):
         names_list = ['chrom','end','start','seq-name','score','strand','thickStart','thickEnd','itemRgb','blockCount','blockSizes','blockStarts']
     bed12_np = pd.read_csv(bedfile,sep = '\t',header = None,names = names_list)
     bed12_np = bed12_np[bed12_np['seq-name'].isin(retain_seqs)]
+    print(f'PolyA filter read count "{strand_map[strand]}":\t',bed12_np.shape[0])
     bed12_np = noise_filter(bed12_np,3,'start')
     bed12_np = noise_filter(bed12_np,1,'end')
+    print(f'Noise filter (occurence > 3 - start,occurrence > 1 - end ) "{strand_map[strand]}":\t',bed12_np.shape[0])
     return bed12_np
 
 def create_bedgraph(input_bam,tmp_folder,outfile,TU_iso,TU_iso_read_ids):
@@ -52,20 +57,11 @@ def create_bedgraph(input_bam,tmp_folder,outfile,TU_iso,TU_iso_read_ids):
             tmp_out.write(aln)
     tmp_out.close()
     infile.close()
-#     samtools sort -o $alignment_output/$clust.genome.sorted.bam $alignment_output/$clust.genome.bam
-#     pysam.sort(tmp_out,"-o",tmp_folder + '/' + TU_iso +'.sorted.bam')
-#     pysam.sort("-o", temp_output_location +'.sorted.bam', temp_output_location)
-#     with open(f'{temp_output_location}.sorted.bam', "w") as outfile:
     samtools_sort = f"samtools sort -o {temp_output_location}.sorted.bam {temp_output_location}".split(' ')
     subprocess.run(samtools_sort)
     
     samtools_idx = f"samtools index {temp_output_location}.sorted.bam".split(' ')
     subprocess.run(samtools_idx)
-#     subprocess.run(f"samtools sort -o {temp_output_location}.sorted.bam {temp_output_location}".split(' '))
-#     samtools_p1_temp = subprocess.Popen(f"samtools view {temp_output_location}".split(' '),stdout=subprocess.PIPE)
-#     fout_samtools_tmp = open(outfile, 'wb')
-#     f"bedtools genomecov -ibam {temp_output_location}.sorted.bam -bg -split".split(' ')
-#     print(f"bedtools genomecov -ibam {tmp_out} -bg -split".split(' '))
     fout_bedgraph = open(outfile,'w')
 
     genomecoverage_p2 = subprocess.run(f"bedtools genomecov -ibam {temp_output_location}.sorted.bam -bg -split".split(' '),stdout=fout_bedgraph)
@@ -83,24 +79,41 @@ def filter_clusters(df,min_abundance):
         if top_count/total > min_abundance:
             keep_unique_start_df = current_df[current_df['start']==top_TSS]
             retain_clusters_df = pd.concat([retain_clusters_df,keep_unique_start_df])
-            # retain_clusters.append(clusters)
-#     clust_filt_df = df[df['Final_clusters'].isin(retain_clusters)]
     return retain_clusters_df    
-
+def get_individual_clusters(full_df):
+    """Takes in the full dataframe and collapses its
+    """
+    cluster_indv = pd.DataFrame()
+    for clust in set(full_df['TU.#-iso.#']):
+        current_cluster = full_df[full_df['TU.#-iso.#']==clust]
+        top_blocksize_count = current_cluster.groupby('blockSize-sums').size().sort_values(ascending = False).head(1).index[0]
+        single_row_df = current_cluster[current_cluster['blockSize-sums'] == top_blocksize_count].sample(1)
+        cluster_indv = pd.concat([cluster_indv,single_row_df])
+    return cluster_indv
+def formatting_output(cluster_indv):
+    """Returns a formatted bed12 file
+    """
+    cols = list(cluster_indv)
+    cols[3], cols[13] = cols[13], cols[3]
+    cols[4], cols[14] = cols[14], cols[4]
+    cluster_indv = cluster_indv.loc[:,cols]
+    cluster_indv = cluster_indv[cluster_indv.columns[:len(cluster_indv.columns)-3]]
+    cluster_indv.rename(columns={'TU.#-iso.#': 'name', 'TU.#-iso.#-count': 'score'}, inplace=True)
+    return cluster_indv
 if __name__ == '__main__':
     import argparse
+
     ap = argparse.ArgumentParser(description = 'Takes in input dataset')
 
     requiredGrp = ap.add_argument_group('required arguments')
     requiredGrp.add_argument("-i",'--input_file', required=True, help="BAM file input location")
     requiredGrp.add_argument("-o",'--output_directory', required=False, help="output file location",default = '.',type = str)
-    requiredGrp.add_argument("-eg",'--TES_grouping', required=False, help="Grouping value for clustering (TES)",default = 50.0,type = float)
-    requiredGrp.add_argument("-sg",'--TSS_grouping', required=False, help="Grouping value for clustering (TSS)",default = 20.0,type = float)
+    requiredGrp.add_argument("-eg",'--TES_grouping', required=False, help="Grouping value for clustering (TES), default 50",default = 50.0,type = float)
+    requiredGrp.add_argument("-sg",'--TSS_grouping', required=False, help="Grouping value for clustering (TSS), default 20",default = 20.0,type = float)
     requiredGrp.add_argument("-n",'--nanopolish', required=True, help="nanopolish location output location (requires concatenated fwd and rev)")
-#    requiredGrp.add_argument("-cf",'--cigar_file', required=True, help="cigar file containing [read_name,['fwd|reverse' alignment],cigar]")
-    requiredGrp.add_argument("-c",'--cigar_filter', required=False, help="cigar filter on TSS strand",default=12.5,type = float)
+    requiredGrp.add_argument("-c",'--cigar_filter', required=False, help="cigar filter on TSS strand, default 12",default=12,type = float)
     requiredGrp.add_argument("-m",'--minimum_cluster_seqs', required=False, help="Retains clusters that have a minimum m (default 20)",default=20,type = float)
-#     requiredGrp.add_argument("-s",'--strand', required=True, help="Strand of bed file")
+    requiredGrp.add_argument("-pc",'--post_clustering_filter', required=False, help="Within a TU, if the top TSS does not have at least (pc) of the reads, this cluster is ignored (default .25)",default=.25,type = float)
     args = vars(ap.parse_args())
     input_file = args['input_file']
     output_file = args['output_directory']
@@ -110,6 +123,9 @@ if __name__ == '__main__':
 #    cigar_file_path = args['cigar_file']
     cigar_filter_val = int(args['cigar_filter'])
     min_clust = int(args['minimum_cluster_seqs'])
+    pc_filter = float(args['post_clustering_filter'])
+#     help_functions.check_bedtools()
+#     if help_functions.check_samtools() == True and help_functions.check_bedtools() == True:
     create_tmp_files(input_file,output_file +'/tmp')
     cigar_file_path = output_file +'/tmp/' + 'seq-cigar-orient.tmp'
     polyA = pd.read_csv(nanopolish_path,sep = '\t')
@@ -119,27 +135,38 @@ if __name__ == '__main__':
     full_cluster_df = pd.DataFrame()
     for strand in ['+','-']:
 #         print('STRAND',strand)
+        sys.stdout = open(output_file +'/' +f'Filtering-counts.{strand_map[strand]}.tsv', 'w')
+
         strand_sequences = nanopolish_filter.return_nanopolish_dedup(raw_bed12,polyA,strand)
+        print(f'Raw bed file read count "{strand_map[strand]}":\t',raw_bed12.shape[0])
         bed12_nano_dedup = read_in_bed(output_file +'/tmp/' + 'BED-file.tmp',strand,strand_sequences)
 #         print('Nanopolish FILTER',bed12_nano_dedup.shape)
-
+        
         filter_cigar = TSS_soft_clip_filter.filter_sequences(cigar_file_path,cigar_filter_val,strand)
         cigar_retain_lst = bed12_nano_dedup[bed12_nano_dedup['seq-name'].isin(list(filter_cigar['sequence']))]
+        print(f'Cigar filter read count  "{strand_map[strand]}":\t',cigar_retain_lst.shape[0])
         TSS_df = TSS_grouping.TSS_grouping(cigar_retain_lst,TSS_group_val)
         final_TU_cluster_df,TES_counts = TES_grouping.TES_grouping(TSS_df,TES_group_val)
-        final_filtered_clusters =  filter_clusters(final_TU_cluster_df,.25)
-        
+#         print('PC-FILTER',pc_filter)
+        final_filtered_clusters =  filter_clusters(final_TU_cluster_df,pc_filter)
+        print(f'Post clustering TSS filter  "{strand_map[strand]}":\t',final_filtered_clusters.shape[0])
         filtered_min_clusters = [TU for TU,count in Counter(final_filtered_clusters['Final_clusters']).items() if count > min_clust]
         final_filtered_clusters = final_filtered_clusters[final_filtered_clusters['Final_clusters'].isin(filtered_min_clusters)]
+        print(f'Retained clusters after minimum cluster count threshold  "{strand_map[strand]}":\t',final_filtered_clusters.shape[0])
         final_filtered_clusters['blockSize-sums'] = iso_grouping.get_blocksize_length(final_filtered_clusters['blockSizes'])  
         final_filtered_clusters_iso = iso_grouping.run_isoform(final_filtered_clusters)
+        print(f'Isoform level reads counts (after internal filtering for blockSize-sums-occurences > 2 (within each TU)) "{strand_map[strand]}":\t',final_filtered_clusters.shape[0])
+        final_filtered_clusters_iso_bed = get_individual_clusters(final_filtered_clusters_iso)
+        final_filtered_clusters_iso_bed = formatting_output(final_filtered_clusters_iso_bed)
+        print(f'Collapsed read counts "{strand_map[strand]}":\t',final_filtered_clusters_iso_bed.shape[0])
 #         pd.DataFrame(final_filtered_clusters['Final_clusters'].value_counts()).to_csv(output_file+'/Final_cluster.counts.' + strand_map[strand]+'.txt',header =None,sep = '\t')
-        final_filtered_clusters_iso.to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.txt',sep ='\t',index = None)
+        final_filtered_clusters_iso_bed.to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.bed',sep ='\t',index = None)
         bedgraph_outs = output_file+'/bedgraphs-'+strand_map[strand]
         os.makedirs(bedgraph_outs,exist_ok=True)
+        sys.stdout.close()
         import pysam
         for TU_isoforms in set(final_filtered_clusters_iso['TU.#-iso.#']):
-            print(TU_isoforms)
+            os.system(f'echo {TU_isoforms}')
             current_seqs = list(final_filtered_clusters_iso[final_filtered_clusters_iso['TU.#-iso.#'] == TU_isoforms]['seq-name'])
             #create_bedgraph(infile,tmp_folder,outfile,TU_iso,TU_iso_read_ids)
             create_bedgraph(input_file,output_file +'/tmp',bedgraph_outs+'/'+TU_isoforms +'.'+strand_map[strand]+ '.bedgraph',TU_isoforms,current_seqs)

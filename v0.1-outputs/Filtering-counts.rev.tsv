@@ -1,0 +1,8 @@
+Raw bed file read count "rev":	 203778
+PolyA filter read count "rev":	 22049
+Noise filter (occurence > 3 - start,occurrence > 1 - end ) "rev":	 18521
+Cigar filter read count  "rev":	 15917
+Post clustering TSS filter  "rev":	 1444
+Retained clusters after minimum cluster count threshold  "rev":	 1391
+Isoform level reads counts (after internal filtering for blockSize-sums-occurences > 2 (within each TU)) "rev":	 1391
+Collapsed read counts "rev":	 14
