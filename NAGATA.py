@@ -41,11 +41,13 @@ def read_in_bed(bedfile,strand,retain_seqs):
     else: 
         names_list = ['chrom','end','start','seq-name','score','strand','thickStart','thickEnd','itemRgb','blockCount','blockSizes','blockStarts']
     bed12_np = pd.read_csv(bedfile,sep = '\t',header = None,names = names_list)
+    original_bed_size =  bed12_np.shape[0]
     bed12_np = bed12_np[bed12_np['seq-name'].isin(retain_seqs)]
-    print(f'PolyA filter read count "{strand_map[strand]}":\t',bed12_np.shape[0])
+    print(f'Reads lacking readable polyA tail:\t',original_bed_size-bed12_np.shape[0])
+    polyA_reads = bed12_np.shape[0]
     bed12_np = noise_filter(bed12_np,3,'start')
     bed12_np = noise_filter(bed12_np,1,'end')
-    print(f'Noise filter (occurence > 3 - start,occurrence > 1 - end ) "{strand_map[strand]}":\t',bed12_np.shape[0])
+    print(f'Reads rejected by alignment location:\t',polyA_reads-bed12_np.shape[0])
     return bed12_np
 
 def create_bedgraph(input_bam,tmp_folder,outfile,TU_iso,TU_iso_read_ids):
@@ -135,32 +137,39 @@ if __name__ == '__main__':
     full_cluster_df = pd.DataFrame()
     for strand in ['+','-']:
 #         print('STRAND',strand)
+#         print(f'Currently processing {strand_map[strand]} strand...')
+        os.system(f'echo Currently processing {strand_map[strand]} strand...')
         sys.stdout = open(output_file +'/' +f'Filtering-counts.{strand_map[strand]}.tsv', 'w')
 
         strand_sequences = nanopolish_filter.return_nanopolish_dedup(raw_bed12,polyA,strand)
-        print(f'Raw bed file read count "{strand_map[strand]}":\t',raw_bed12.shape[0])
+        print(f'Total input reads:\t',raw_bed12.shape[0])
         bed12_nano_dedup = read_in_bed(output_file +'/tmp/' + 'BED-file.tmp',strand,strand_sequences)
 #         print('Nanopolish FILTER',bed12_nano_dedup.shape)
         
         filter_cigar = TSS_soft_clip_filter.filter_sequences(cigar_file_path,cigar_filter_val,strand)
         cigar_retain_lst = bed12_nano_dedup[bed12_nano_dedup['seq-name'].isin(list(filter_cigar['sequence']))]
-        print(f'Cigar filter read count  "{strand_map[strand]}":\t',cigar_retain_lst.shape[0])
+        print(f'Reads with soft-clipping exceeding filter:\t',bed12_nano_dedup.shape[0]-cigar_retain_lst.shape[0])
         TSS_df = TSS_grouping.TSS_grouping(cigar_retain_lst,TSS_group_val)
         final_TU_cluster_df,TES_counts = TES_grouping.TES_grouping(TSS_df,TES_group_val)
 #         print('PC-FILTER',pc_filter)
         final_filtered_clusters =  filter_clusters(final_TU_cluster_df,pc_filter)
-        print(f'Post clustering TSS filter  "{strand_map[strand]}":\t',final_filtered_clusters.shape[0])
+        print(f'Reads available for transcriptome construction:\t',final_filtered_clusters.shape[0],'\n')
+
+
+        print(f'Number of transcription units identified:\t',len(set(final_filtered_clusters['Final_clusters'])))
         filtered_min_clusters = [TU for TU,count in Counter(final_filtered_clusters['Final_clusters']).items() if count > min_clust]
         final_filtered_clusters = final_filtered_clusters[final_filtered_clusters['Final_clusters'].isin(filtered_min_clusters)]
-        print(f'Retained clusters after minimum cluster count threshold  "{strand_map[strand]}":\t',final_filtered_clusters.shape[0])
+        print(f'Number of transcription units passing filter:\t',len(set(final_filtered_clusters['Final_clusters'])),'\n')
         final_filtered_clusters['blockSize-sums'] = iso_grouping.get_blocksize_length(final_filtered_clusters['blockSizes'])  
         final_filtered_clusters_iso = iso_grouping.run_isoform(final_filtered_clusters)
-        print(f'Isoform level reads counts (after internal filtering for blockSize-sums-occurences > 2 (within each TU)) "{strand_map[strand]}":\t',final_filtered_clusters.shape[0])
+#         print(final_filtered_clusters.head())
+        print(f'Number of isoforms identified:\t',len(set(final_filtered_clusters_iso['TU.#-iso.#'])))
         final_filtered_clusters_iso_bed = get_individual_clusters(final_filtered_clusters_iso)
         final_filtered_clusters_iso_bed = formatting_output(final_filtered_clusters_iso_bed)
-        print(f'Collapsed read counts "{strand_map[strand]}":\t',final_filtered_clusters_iso_bed.shape[0])
+        print(f'Number of isoforms passing filter:\t',final_filtered_clusters_iso_bed.shape[0])
 #         pd.DataFrame(final_filtered_clusters['Final_clusters'].value_counts()).to_csv(output_file+'/Final_cluster.counts.' + strand_map[strand]+'.txt',header =None,sep = '\t')
-        final_filtered_clusters_iso_bed.to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.bed',sep ='\t',index = None)
+        final_filtered_clusters_iso_bed.to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.bed',sep ='\t',index = None,header = None)
+        final_filtered_clusters_iso.to_csv(output_file+'/Final_cluster.precollapsed.' + strand_map[strand]+'.tsv',sep ='\t',index = None)
         bedgraph_outs = output_file+'/bedgraphs-'+strand_map[strand]
         os.makedirs(bedgraph_outs,exist_ok=True)
         sys.stdout.close()
