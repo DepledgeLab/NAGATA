@@ -41,22 +41,30 @@ samtools view "dRNA-READS.GENOMIC".sam | cut -f1,2,6 > "SEQUENCE.STRAND.CIGAR".t
 ## Running NAGATA
 ### Test command
 ```
-python3 NAGATA.py -i test-dataset/Ad5-12h-24h.bed -o test-outs/ -n test-dataset/Ad5-12h-24h.polyA.fwd.rev.tsv -cf test-dataset/sam_seq_strand_cigar.txt
-NEED TO CHANGE INPUT TO SORTED.BAM AND REMOVE REQUIREMENT FOR CIGAR FILE (HARDCODE INSTEAD)
+python3 NAGATA.py -i test-dataset/Ad5.combined.05.subsampled.sorted.bam -n test-dataset/Ad5.subsample.nanopolish.tsv -o test-outs
+
 ```
 ### Required Flags
 ```
--i      A BED file in bed12 format
+-i      BAM file containing reads aligned to reference genome
 -o      Output directory 
 -n      Path to file containing per read estimates of poly-A tail lengths from Nanopolish-polya
--cf     Path to file containing individual sequence names with corresponding strand information, and cigar string
 ```
 ### Optional Flags
 ```
 -eg     Grouping value (int) for TESs to be considered within same cluster (default: 50)
 -sg     Grouping value (int) for TSSs to be considered within same cluster (default: 20)
 -c      Soft clipping value to filter lower quality reads (default: 12.5)
--m      Minimum number of reads a cluster must have to be considered real (default: 20)
+-m      Minimum number of reads a Transcriptional unit (TU) must have to be considered "real" (default: 20)
+-mi     Minimum number of reads a transcript isoforms needs to be considered "real" (default: 5)
+-pc     Within a TU, if the most abundant TSS does not have at least (pc) of reads, this TU is ignored (default: .25)
+-TSS_pad     TSS peak is defined by most abundant TSS in TU, (+/- TSS_pad) are used to include surrounding reads and subsequently corrected for more reads(default 12)
+TES_pad      CPAS peak is defined by most abundant CPAS in TU, (+/- TES_pad) are used to include surrounding reads and subsequently corrected for more reads(default 25)
+-b     Output bedgraph coverage data for each transcript isoform to file (default: False) 
+-s     Initially filter out TSS sites that have a count <s (default: 3)
+-p     Initially filter out CPAS sites that have a count <c (default: 1)
+-f     Value to distinguish isoforms of the same TU, i.e. if sizes of transcripts (of the same exon count) fall within f, these transcripts are considered the same (default: 10)
+-t     How to apply nanopolish filter, retain reads P (PASS), N (NO_PASS), A (N + P, all reads) (default: P)
 ```
 
 
