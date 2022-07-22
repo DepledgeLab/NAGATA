@@ -1,0 +1,23 @@
+Total input reads:	 5518
+Reads lacking readable polyA tail:	 1771
+Reads rejected by alignment location:	 2112
+                               sequence strandness                                              cigar
+0  646c17af-6eb0-4434-a687-1f50b9995003          +  2S41M1I16M2I5M1D4M1D22M1I8M3I21M1D9M1D32M1D11M...
+1  75ca9935-4a64-43ff-bfd3-69536c42b881          +  1S8M1D52M2D17M1I30M1D37M1I4M1D14M1D24M3D38M3D1...
+2  9c667670-6c1a-49e3-8b17-1d068dd47716          +  1S21M1D3M1D10M1D18M2I2M3D22M1D17M2D18M3I11M3I1...
+3  37082e35-1f8b-4b17-8478-be05823e9d49          +  4S24M1D6M1D37M3D18M1D4M1I10M1D7M1I12M1D20M7D26...
+4  d658d89a-bd55-472e-8d26-535d14ad0ad1          +  24S4M1I11M2D11M1D8M1I9M1D14M1D5M1I11M2D1M1I12M...
+                               sequence strandness                                              cigar  soft_clip_values
+0  646c17af-6eb0-4434-a687-1f50b9995003          +  2S41M1I16M2I5M1D4M1D22M1I8M3I21M1D9M1D32M1D11M...                 2
+1  75ca9935-4a64-43ff-bfd3-69536c42b881          +  1S8M1D52M2D17M1I30M1D37M1I4M1D14M1D24M3D38M3D1...                 1
+2  9c667670-6c1a-49e3-8b17-1d068dd47716          +  1S21M1D3M1D10M1D18M2I2M3D22M1D17M2D18M3I11M3I1...                 1
+3  37082e35-1f8b-4b17-8478-be05823e9d49          +  4S24M1D6M1D37M3D18M1D4M1I10M1D7M1I12M1D20M7D26...                 4
+4  d658d89a-bd55-472e-8d26-535d14ad0ad1          +  24S4M1I11M2D11M1D8M1I9M1D14M1D5M1I11M2D1M1I12M...                24
+Reads with soft-clipping (value:12) filter:	 275
+Reads available for transcriptome construction:	 1191 
+
+Number of transcription units identified:	 18
+Number of transcription units passing (value:20) filter:	 10 
+
+Number of isoforms identified:	 24
+Number of isoforms passing (value:5) filter:	 22

@@ -15,7 +15,7 @@ def get_blocksize_length(lst):
             return_lst.append(int(i))
     return return_lst
     
-def return_isoform_(TU_df):
+def return_isoform_(TU_df,grouping_value):
     """Within TUs, uses blockCount to initially seperate isoforms, and then groups isoforms by sum of blockSizes
     """
     count = 0
@@ -23,7 +23,7 @@ def return_isoform_(TU_df):
     for i in set(TU_df['blockCount']):
         current_TU = TU_df[TU_df['blockCount']==i]
         current_TU = current_TU.groupby("blockSize-sums").filter(lambda x: len(x) > 2)
-        isoform_groups = list(help_functions.grouper(sorted(current_TU['blockSize-sums'].value_counts().index),10))
+        isoform_groups = list(help_functions.grouper(sorted(current_TU['blockSize-sums'].value_counts().index),grouping_value))
         for group,lengths in enumerate(isoform_groups):
             count += 1 
             current_TU_isos = current_TU[current_TU['blockSize-sums'].isin(lengths)]
@@ -31,12 +31,12 @@ def return_isoform_(TU_df):
             isoform_df = pd.concat([isoform_df,current_TU_isos])
     return isoform_df
 
-def run_isoform(df):
+def run_isoform(df,grouping_value):
     final_df = pd.DataFrame()
     all_TUs = set(df['Final_clusters'])
     for TU_names in all_TUs:
         individual_TUs = df[df['Final_clusters'] == TU_names]
-        id_isoforms = return_isoform_(individual_TUs)
+        id_isoforms = return_isoform_(individual_TUs,grouping_value)
         final_df = pd.concat([final_df,id_isoforms])
     TU_map = dict(enumerate(set(final_df['Final_clusters']),start =1))
     TU_map = {v:k for k,v in TU_map.items()}

@@ -1,0 +1,1 @@
+sequence	strandness	cigar	soft_clip_values

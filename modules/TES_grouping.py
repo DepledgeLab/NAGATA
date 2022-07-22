@@ -38,8 +38,41 @@ def return_TU_counts(grouped_TES_df,lst_of_clusters):
         end_counts_df.at[0, 'chosen'] = '*'
         TU_counts = pd.concat([TU_counts,end_counts_df])
     return TU_counts
+#####
+# def TES_grouping(grouped_TSS_df,grouping_val):
+#     grouped_TSS_df.to_csv('Filter_clusters.TES.txt',sep ='\t',index = None)
+#     clustered_TES = TES_ends(grouped_TSS_df,grouping_val)
+#     lst_of_clusters = sorted(set(clustered_TES['Final_clusters']))
+#     TES_counts = return_TU_counts(clustered_TES,lst_of_clusters)
+#     final_TU_cluster_df = pd.DataFrame()
+#     for i in lst_of_clusters:
+#         current_TU = clustered_TES[clustered_TES['Final_clusters'] == i]
+#         chosen_end = TES_counts[TES_counts['Final_clusters'] == i]['end'][0] 
+#         current_TU = current_TU[current_TU['end'] == chosen_end]
+#         final_TU_cluster_df = pd.concat([final_TU_cluster_df,current_TU])
+#     return final_TU_cluster_df,TES_counts
+#######
 
-def TES_grouping(grouped_TSS_df,grouping_val):
+########TESTING #######
+def df_correction_TES(current_df_TES):
+    highest_TES = current_df_TES['end'].value_counts().head(1).index[0]
+    current_df_TES['val-correct'] = highest_TES - current_df_TES['end']
+
+    current_df_TES['end'] = current_df_TES['end'] + current_df_TES['val-correct']
+    current_df_TES['thickEnd'] = current_df_TES['thickEnd'] + current_df_TES['val-correct']
+
+    blocksize_correction_lst = []
+    for correct,blocksizes in zip(current_df_TES['val-correct'],current_df_TES['blockSizes']):
+        old_blockSize_ind1 = int(blocksizes.split(',')[-1])
+        correction = str(old_blockSize_ind1+correct)
+    #         print(correct)
+        blocksize_correction_lst.append(blocksizes.replace(str(old_blockSize_ind1),correction))
+    current_df_TES['blockSizes'] = blocksize_correction_lst
+    current_df_TES = current_df_TES.drop(['val-correct'],axis =1)
+    return current_df_TES    
+
+def TES_grouping(grouped_TSS_df,grouping_val,TES_pad):
+#    grouped_TSS_df.to_csv('Filter_clusters.TES.txt',sep ='\t',index = None)
     clustered_TES = TES_ends(grouped_TSS_df,grouping_val)
     lst_of_clusters = sorted(set(clustered_TES['Final_clusters']))
     TES_counts = return_TU_counts(clustered_TES,lst_of_clusters)
@@ -47,10 +80,13 @@ def TES_grouping(grouped_TSS_df,grouping_val):
     for i in lst_of_clusters:
         current_TU = clustered_TES[clustered_TES['Final_clusters'] == i]
         chosen_end = TES_counts[TES_counts['Final_clusters'] == i]['end'][0] 
-        current_TU = current_TU[current_TU['end'] == chosen_end]
+
+        current_TU = current_TU[(current_TU['end'] < chosen_end+TES_pad) & (current_TU['end'] > chosen_end-TES_pad)]
+        current_TU = df_correction_TES(current_TU)
         final_TU_cluster_df = pd.concat([final_TU_cluster_df,current_TU])
     return final_TU_cluster_df,TES_counts
     
+
 if __name__ == '__main__':
     import argparse
     ap = argparse.ArgumentParser(description = 'Takes in input dataset')

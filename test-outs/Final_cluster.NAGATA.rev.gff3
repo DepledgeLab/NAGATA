@@ -1,0 +1,16 @@
+Ad5	NAGATA	gene	22373	25892	.	-	.	ID=gene.TU.2
+Ad5	NAGATA	mRNA	22373	25892	26	-	.	ID=mRNA.TU.2-iso.1;Parent=gene.TU.2;Name=TU.2-iso.1
+Ad5	NAGATA	exon	22373	24041	.	-	.	ID=exon1.TU.2;Parent=mRNA.TU.2-iso.1
+Ad5	NAGATA	exon	24667	24744	.	-	.	ID=exon2.TU.2;Parent=mRNA.TU.2-iso.1
+Ad5	NAGATA	exon	25838	25892	.	-	.	ID=exon3.TU.2;Parent=mRNA.TU.2-iso.1
+Ad5	NAGATA	gene	4056	5825	.	-	.	ID=gene.TU.1
+Ad5	NAGATA	mRNA	4056	5825	17	-	.	ID=mRNA.TU.1-iso.1;Parent=gene.TU.1;Name=TU.1-iso.1
+Ad5	NAGATA	exon	4056	5427	.	-	.	ID=exon1.TU.1;Parent=mRNA.TU.1-iso.1
+Ad5	NAGATA	exon	5705	5825	.	-	.	ID=exon2.TU.1;Parent=mRNA.TU.1-iso.1
+Ad5	NAGATA	gene	22373	27035	.	-	.	ID=gene.TU.3
+Ad5	NAGATA	mRNA	22373	27035	7	-	.	ID=mRNA.TU.3-iso.1;Parent=gene.TU.3;Name=TU.3-iso.1
+Ad5	NAGATA	mRNA	22373	27035	39	-	.	ID=mRNA.TU.3-iso.2;Parent=gene.TU.3;Name=TU.3-iso.2
+Ad5	NAGATA	exon	22373	24041	.	-	.	ID=exon1.TU.3;Parent=mRNA.TU.3-iso.1,mRNA.TU.3-iso.2
+Ad5	NAGATA	exon	24667	24744	.	-	.	ID=exon2.TU.3;Parent=mRNA.TU.3-iso.2
+Ad5	NAGATA	exon	26983	27035	.	-	.	ID=exon3.TU.3;Parent=mRNA.TU.3-iso.2
+Ad5	NAGATA	exon	26983	27040	.	-	.	ID=exon4.TU.3;Parent=mRNA.TU.3-iso.1
