@@ -23,12 +23,12 @@ Once clustered have been identifed using "starts", NAGATA uses a similar algorit
 ## ***NAGATA outputs***
 ```
 In the directory specified by the -o flag, the following files should be produced for each available strand\
-1: Filtering-counts.'strand'.tsv    How many reads are being filtered at each filter\
-2: Final_cluster.'strand'.bed       Main output of NAGATA, regular BED file with 4th column being the NAGATA-name and 5th column being the transcript abundance\
-3: Final_cluster.NAGATA.'strand'.gff3      Final_cluster.'strand'.bed converted in GFF3 file\
-4: Final_cluster.precollapsed.'strand'.tsv      A precollapsed version of Final_cluster.'strand'.bed which \
-5: NAGATA-parameters.tsv       List of all parameters used for this run\
-6: TMP directory       For testing purposes - intermediate files are saved here\
+1: Filtering-counts.'strand'.tsv                How many reads are being filtered at each filter
+2: Final_cluster.'strand'.bed                   Main output of NAGATA, regular BED file with 4th column being the NAGATA-name and 5th column being the transcript abundance
+3: Final_cluster.NAGATA.'strand'.gff3           Final_cluster.'strand'.bed converted in GFF3 file
+4: Final_cluster.precollapsed.'strand'.tsv      A precollapsed version of Final_cluster.'strand'.bed which 
+5: NAGATA-parameters.tsv                        List of all parameters used for this run
+6: TMP directory                                For testing purposes - intermediate files are saved here
 ```
 
 ## Running NAGATA
