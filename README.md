@@ -12,13 +12,23 @@ BEDtools v2.26 or v2.27
 ### ***BAM file***
 
 #### BAM files are used to cluster sequences based on alignment similarities in an iterative manner. 
-NAGATA parses read alignments to identify Transcriptional Units (TUs) by internally converting BAM file into BED12 followed by numerically sorting "start" and "end" positions and then grouping alignments with similar "start" and "end" co-ordinates. This is performed on a row-by-row basis with a new TU defined only if the alignment co-ordinates of a given row differ from the previous row by greater than user-defined threshold (20 nt for transcription start sites (TSS), 50 nt for cleavage and polyadenylation sites (CPAS)).  TSS threshold can be tuned using the -sg parameter while the CPAS threshold can be control using the -eg parameter.
+NAGATA parses read alignments to identify Transcriptional Units (TUs) by internally converting BAM file into BED12 followed by numerically sorting "start" and "end" positions and then grouping alignments with similar "start" and "end" co-ordinates. This is performed on a row-by-row basis with a new TU defined only if the alignment co-ordinates of a given row differ from the previous row by greater than user-defined threshold (20 nt for transcription start sites (TSS), 50 nt for cleavage and polyadenylation sites (CPAS)).  TSS threshold can be tuned using the -sg flag while the CPAS threshold can be control using the -eg flag.
 
 ![TSS-example](/modules/TSS-example.png)
 ![Algorithm example](/modules/Grouping-TSS.pdf)
 
 Once clustered have been identifed using "starts", NAGATA uses a similar algorithm using "ends" within each cluster.
 ![TES-example](/modules/TES-example.png)
+
+### ***NAGATA outputs***
+In the directory specified by the -o flag, the following files should be produced for each available strand
+1: Filtering-counts.'strand'.tsv  - How many reads are being filtered at each filter
+2: Final_cluster.'strand'.bed - Main output of NAGATA, regular BED file with 4th column being the NAGATA-name and 5th column being the transcript abundance
+3: Final_cluster.NAGATA.'strand'.gff3 - Final_cluster.'strand'.bed converted in GFF3 file
+4: Final_cluster.precollapsed.'strand'.tsv - A precollapsed version of Final_cluster.'strand'.bed which 
+5: NAGATA-parameters.tsv - List of all parameters used for this run
+6: TMP directory - For testing purposes - intermediate files are saved here
+
 
 ## Running NAGATA
 ### Test command
