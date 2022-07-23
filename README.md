@@ -25,6 +25,7 @@ Using the commands detailed in the "Running NAGATA" section, running NAGATA usin
 (1) Final_cluster.fwd.bed file with 22 distinct transcripts\ 
 (2) Final_cluster.rev.bed file with 4 distinct transcripts\ 
 among the rest of the files indicated below with a total runtime of <1min
+
 ```
 In the directory specified by the -o flag, the following files should be produced for each available strand
 
