@@ -33,6 +33,9 @@ In the directory specified by the -o flag, the following files should be produce
 ```
 
 ## Running NAGATA
+### Environment setup
+For now creating an environment using directions detailed in [DRUMMER](https://github.com/DepledgeLab/DRUMMER) should suffice. 
+
 ### Test command
 ```
 python3 NAGATA.py -i test-dataset/Ad5.combined.05.subsampled.sorted.bam -n test-dataset/Ad5.subsample.nanopolish.tsv -o test-outs
