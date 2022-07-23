@@ -21,9 +21,9 @@ Once clustered have been identifed using "starts", NAGATA uses a similar algorit
 ![TES-example](/modules/TES-example.png)
 
 ## ***NAGATA outputs***
-Using the commands detailed in the "Running NAGATA" section, running NAGATA using the test data should produce:\ 
-(1) Final_cluster.fwd.bed file with 22 distinct transcripts\ 
-(2) Final_cluster.rev.bed file with 4 distinct transcripts\ 
+Using the commands detailed in the "Running NAGATA" section, running NAGATA using the test data should produce:
+(1) Final_cluster.fwd.bed file with 22 distinct transcripts
+(2) Final_cluster.rev.bed file with 4 distinct transcripts 
 among the rest of the files indicated below with a total runtime of <1min
 
 ```
