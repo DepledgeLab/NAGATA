@@ -98,7 +98,7 @@ if __name__ == '__main__':
 
     #### Handled in main function
     df = pd.read_csv(input_file,sep = '\t',header = None)
-#    df[12] = [i.split('-')[0] for i in df[3]]
+    df[12] = [i.split('-')[0] for i in df[3]]
     final_df = run_BED2GFF3(df)
     ####
     final_df.to_csv(output_file,sep = '\t',index = None,header = None)

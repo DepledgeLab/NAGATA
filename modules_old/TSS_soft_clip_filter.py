@@ -34,8 +34,9 @@ def filter_sequences(seq_cigar_file_path,filt_val,strands):
     
     final_df = pd.DataFrame()
     df_seq_cig_current = df_seq_cig[df_seq_cig['strandness'] == strands]
-
+    print(df_seq_cig_current.head())
     df_cigar_calc = get_cigar_vals(df_seq_cig_current,strands)
+    print(df_cigar_calc.head())
     df_cigar_calc_filt = df_cigar_calc[df_cigar_calc['soft_clip_values'] < filt_val]
 #     final_df = pd.concat([final_df,df_cigar_calc_filt])
     return df_cigar_calc_filt
