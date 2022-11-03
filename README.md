@@ -1,5 +1,5 @@
 # NAGATA
-***Nanopore Augmented Genome and Transcriptome Annotation***
+***Nanopore Guided Annotation of Transcriptome Architectures***
 
 NAGATA uses Nanopore direct RNA sequencing reads aligned to a genome to produce a transcriptome annotation.
 ## Data Preparation
@@ -71,39 +71,39 @@ TES_pad      CPAS peak is defined by most abundant CPAS in TU, (+/- TES_pad) are
 
 
 ## Data preparation
-In order to reconstruct a transcriptome, NAGATA requires, at minimum, a sorted BAM file containing DRS reads aligned against a reference genome. For optimal performance, we recommend (i) filtering aligned sequence reads to retain only primary alignments, and (ii) using nanopolish to exclude alignments originating from reads without defined polyA sequences.
-
-### Basecalling
-We recommend that DRS basecalling is performed with Guppy v4.2.2 or higher and the following parameters:
-```
-guppy_basecaller -i /nanopore/fast5/data -s /output/dir -c rna_r9.4.1_70bps_hac.cfg -r --calib_detect --trim_strategy rna --reverse_sequence true 
-```
+In order to reconstruct a poly(A)+ transcriptome, NAGATA requires, at minimum, a sorted BAM file containing DRS reads aligned against a reference genome. For optimal performance, we recommend (i) filtering aligned sequence reads to retain only primary alignments, and (ii) using nanopolish polya to exclude alignments originating from reads without well-supported polyA sequences.
 
 ### Alignment
 In general (inc. for most DNA viruses), reads can be aligned to a reference genome using minimap2 with the following parameters:
 ```
 minimap2 -ax splice -k14 -uf ref.fasta DRS.reads.fastq > all.sam
 ```
-For many RNA viruses, particular those which form subgenomicRNAs (e.g. coronaviruses), we recommend alternative parameters optimized for detecting non-splice junctions e.g:
+For RNA viruses which generate subgenomic RNAs by discountinuous transcription (e.g. coronaviruses), we  we recommend alternative parameters for alignment that are optimized for detecting non-canonical junctions
 ```
 minimap2 -ax splice -k 8 -w 3 -g 30000 -G 30000 -C0 -uf --no-end-flt --splice-flank=no ref.fasta DRS.reads.fastq > all.sam
 ```
-Following alignment, filtering to retain only primary alignments in a sorted BAM file should be be performed as follows:
+
+### Filtering SAM files to retain only primary alignments (alignment flag 0 [forward strand] and 16 [reverse strand]) prior to co-ordinate sorting and indexing
 ```
 samtools view -b -F2308 -o primary.aligned.bam all.sam
 samtools sort -o primary.aligned.sorted.bam primary.aligned.bam
 samtools index primary.aligned.sorted.bam
 ```
 
-### Read filtering
-To identify and remove reads that might introduce artefacts in NAGATA, we perform a filtering step prior to alignment. Here, nanopolish is used to index-link reads in their fastq and fast5 formats, and subsequently to estimate the poly(A) tail length present in each read. 
+### Filtering for reads with robust poly(A) tails
+To identify and remove reads that might introduce artefacts in NAGATA, we perform a filtering step prior to alignment. Here, nanopolish is used to index-link reads in their fastq and fast5 formats, and subsequently to estimate the length and quality of the poly(A) tail present in each read. By default, NAGATA only considers reads for which nanopolish reports the poly(A) tail as 'PASS'
 ```
 nanopolish index -d DRS.reads.fast5/ DRS.reads.fastq
 nanopolish polya --threads="n" --reads=DRS.reads.fastq --bam=primary.aligned.bam --genome=ref.fasta > DRS.polyA.tsv
 ```
 
-
-
-
 ## Troubleshooting
 
+
+
+
+
+
+
+## Wisdom
+Im ta nating
