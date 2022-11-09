@@ -209,13 +209,20 @@ if __name__ == '__main__':
         Final_df = Final_df.sort_values(by=['end','start','blocksizes'])
         
         Final_df.to_csv(output_file+'/Final_cluster.precollapsed.' + strand_map[strand]+'.tsv',sep ='\t',index = None)
-
         most_common_df = pd.DataFrame()
         for i in set(Final_df['full-id']):
             current_df = Final_df[Final_df['full-id']==i]
-
-            current_df = current_df.sort_values(by='splicing-count',ascending = False).head(1)
+            top_blocksize = current_df.value_counts('blocksizes.new').head(1).index[0]
+            current_df = current_df[current_df['blocksizes.new'] == top_blocksize]
+            top_blockstart = current_df.value_counts('blockstarts').head(1).index[0]
+            current_df = current_df[current_df['blockstarts'] == top_blockstart].head(1)
             most_common_df = pd.concat([most_common_df,current_df])
+#         most_common_df = pd.DataFrame()
+#         for i in set(Final_df['full-id']):
+#             current_df = Final_df[Final_df['full-id']==i]
+# 
+#             current_df = current_df.sort_values(by='splicing-count',ascending = False).head(1)
+#             most_common_df = pd.concat([most_common_df,current_df])
         most_common_df[colnames].to_csv(f'most-common-df.{strand_map[strand]}.7.bed',sep ='\t',index = None)
         filtering_counts += f"Number of isoforms identified:\t {len(set(most_common_df['full-id']))}\n"
 
