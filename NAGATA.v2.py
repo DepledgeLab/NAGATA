@@ -21,47 +21,55 @@ strand_map = {'+':'fwd','-':'rev'}
 colnames_fwd = ['chrom','start','end','name','score','strand','thickstart','thickend','itemRGB','blockcount','blocksizes','blockstarts']
 reference_files_scoring = {'+':'reference_bed_f','-':'reference_bed_r'}
 
-
+parsing_dictionary ={'input_file':'-i','output_directory':'-o', 'polya':'-p','soft_clip_filter':'-s','nanopolish_tag':'-nt','CPAS_noise_filter':'-c',
+'TSS_noise_filter':'-t', 'CPAS_clustering':'-cg','TSS_clustering':'-tg','isoform_clustering':'-iso','min_transcript_abundance':'-m','TSS_abundance_per_TU':'a',
+'blocksize_noise_filter':'-b','reference_bed_f':'-r1','reference_bed_r':'-r2'}
 
 
 if __name__ == '__main__':
     import argparse
 
     ap = argparse.ArgumentParser(description = 'Takes in input dataset')
-
+#help
     requiredGrp = ap.add_argument_group('required arguments')
     requiredGrp.add_argument("-i",'--input_file', required=True, help="BAM file input location")
     requiredGrp.add_argument("-o",'--output_directory', required=True, help="output file location",default = '.',type = str)
-    requiredGrp.add_argument("-n",'--nanopolish', required=False, help="nanopolish location output location (requires concatenated fwd and rev)",default = None)
-    requiredGrp.add_argument("-c",'--cigar_filter', required=False, help="cigar filter on TSS strand, default 12",default=3,type = float)
-    requiredGrp.add_argument("-t",'--nanopolish_tag', required=False, help="How to apply nanopolish tag filter, P - PASS, N - NO_PASS, A - All reads (N + P)",default = 'P',type = str)
-    requiredGrp.add_argument("-p",'--noise_filter_CPAS', required=False, help="Filter out CPAS sites that have a count < c",default=20,type = int)
-    requiredGrp.add_argument("-s",'--noise_filter_TSS', required=False, help="Filter out TSS sites that have a count < c",default=4,type = int)
-    requiredGrp.add_argument("-g",'--CPAS_grouping', required=False, help="Grouping value for clustering (CPAS), default 50",default = 50.0,type = int)
-    requiredGrp.add_argument("-d",'--TSS_grouping', required=False, help="Grouping value for clustering (TSS), default 20",default = 20.0,type = int)
-    requiredGrp.add_argument("-f",'--isoform_grouping', required=False, help="Grouping value for grouping blocksizes, default 50",default = 50.0,type = int)
+    requiredGrp.add_argument("-p",'--polya', required=False, help="nanopolish location output location (requires concatenated fwd and rev)",default = None)
+    requiredGrp.add_argument("-s",'--soft_clip_filter', required=False, help="cigar filter on TSS strand, default 12",default=3,type = float)
+    requiredGrp.add_argument("-nt",'--nanopolish_tag', required=False, help="How to apply nanopolish tag filter, P - PASS, N - NO_PASS, A - All reads (N + P)",default = 'P',type = str)
+    requiredGrp.add_argument("-c",'--CPAS_noise_filter', required=False, help="Filter out CPAS sites that have a count < c",default=20,type = int)
+    requiredGrp.add_argument("-t",'--TSS_noise_filter', required=False, help="Filter out TSS sites that have a count < c",default=4,type = int)
+    requiredGrp.add_argument("-cg",'--CPAS_clustering', required=False, help="Grouping value for clustering (CPAS), default 50",default = 50.0,type = int)
+    requiredGrp.add_argument("-tg",'--TSS_clustering', required=False, help="Grouping value for clustering (TSS), default 20",default = 20.0,type = int)
+    requiredGrp.add_argument("-iso",'--isoform_clustering', required=False, help="Grouping value for grouping blocksizes, default 50",default = 50.0,type = int)
     requiredGrp.add_argument("-m",'--min_transcript_abundance', required=False, help="minimum transcript abundance",default = 3,type = int)
-    requiredGrp.add_argument("-a",'--TSS_abundance_per_TU', required=False, help="TSS abundance per transcriptional unit (%)",default = 2,type = float)
-    requiredGrp.add_argument("-b",'--noise_filter_blocksize', required=False, help="Prior to isoform deconvolution - filter out low abundant blocksize sums to prevent incorrect daisy chainging ",default = 3,type = float)
+    requiredGrp.add_argument("-a",'--TSS_abundance_per_TU', required=False, help="TSS abundance per transcriptional unit ",default = 2,type = float)
+    requiredGrp.add_argument("-b",'--blocksize_noise_filter', required=False, help="Prior to isoform deconvolution - filter out low abundant blocksize sums to prevent incorrect daisy chainging ",default = 3,type = float)
     requiredGrp.add_argument("-r1",'--reference_bed_f', required=False, help="reference beds for scoring",default = None,type = str)
     requiredGrp.add_argument("-r2",'--reference_bed_r', required=False, help="reference beds for scoring",default = None,type = str)
+#     requiredGrp.add_argument("-oe",'--override_existing', required=False, help="reference beds for scoring",default = False,type = bool)
+    
     args = vars(ap.parse_args())
     parameters_df = pd.DataFrame.from_dict(args, orient='index')
-    #print(parameters_df)
+    parameters_df[1] = parameters_df.index
+    parameters_df[2] = parameters_df[1].map(parsing_dictionary)
+#     print(parameters_df[[2,1,0]])
     
     input_file = args['input_file']
     output_file = args['output_directory']
-    nanopolish_path = args['nanopolish']
-    cigar_filter_val = int(args['cigar_filter'])
-    CPAS_noise_filter = int(args['noise_filter_CPAS'])
-    TSS_noise_filter = int(args['noise_filter_TSS'])
-    CPAS_grouping_val = int(args['CPAS_grouping'])
-    TSS_grouping_val = int(args['TSS_grouping'])
-    isoform_grouping_val = int(args['isoform_grouping'])
+    nanopolish_path = args['polya']
+    cigar_filter_val = int(args['soft_clip_filter'])
+    CPAS_noise_filter = int(args['CPAS_noise_filter'])
+    TSS_noise_filter = int(args['TSS_noise_filter'])
+    CPAS_grouping_val = int(args['CPAS_clustering'])
+    TSS_grouping_val = int(args['TSS_clustering'])
+    isoform_grouping_val = int(args['isoform_clustering'])
     min_transcript_abundance = int(args['min_transcript_abundance'])
     TSS_abundance_per_TU = float(args['TSS_abundance_per_TU'])
     np_tag = str(args['nanopolish_tag'])
-    blocksizesum_noise_filter = int(args['noise_filter_blocksize'])
+    blocksizesum_noise_filter = int(args['blocksize_noise_filter'])
+    
+#     override_existing = bool(args['override_existing'])
 #     known_beds_f = args['reference_beds_f']
 #     known_beds_r = args['reference_bed_r']
     ##The bool() function is not recommended as a type converter. All it does is convert empty strings to False and non-empty strings to True. This is usually not what is desired.
@@ -74,13 +82,13 @@ if __name__ == '__main__':
         cigar_file_path = output_file +'/tmp/' + 'seq-cigar-orient.tmp'
     
 
-    parameters_df.to_csv(output_file +'/' +'NAGATA-parameters.tsv',header = None,sep = '\t')
+    parameters_df[[2,1,0]].to_csv(output_file +'/' +'parameters.tsv',header = ['flag','parameter_name','value'],sep = '\t',index = None)
     if nanopolish_path != None:
         polyA = pd.read_csv(nanopolish_path,sep = '\t',usecols =[0,9] )
     
     final_counts = pd.DataFrame()
     #full_cluster_df = pd.DataFrame()
-    
+    filtering_counts = ""
     
     #df = pd.read_csv(input_file,sep ='\t',header = None,names = colnames)
     for strand in ['+','-']:
@@ -91,21 +99,21 @@ if __name__ == '__main__':
                 df = pd.read_csv(output_file +'/tmp/' + 'raw-alignment.2.bed',sep = '\t',header = None,names = colnames)
             else: 
                 df = pd.read_csv(input_file,sep = '\t',header = None,names = colnames)
-                print('HERE -')
+#                 print('HERE -')
         else:
             colnames = ['chrom','start','end','name','score','strand','thickstart','thickend','itemRGB','blockcount','blocksizes','blockstarts']
             if is_bam:
                 df = pd.read_csv(output_file +'/tmp/' + 'raw-alignment.2.bed',sep = '\t',header = None,names = colnames_fwd)
             else: 
                 df = pd.read_csv(input_file,sep = '\t',header = None,names = colnames)
-                print('HERE +')
+#                 print('HERE +')
         print(f'Currently processing {strand_map[strand]} strand...\n')
-        filtering_counts = ""
+        # filtering_counts = ""
             
 #         df = pd.read_csv(output_file +'/tmp/' + 'raw-alignment.2.bed',sep = '\t',header = None,names = colnames_fwd)
         ##1 Filter for relevant strand
         df = df[df['strand'] ==strand]
-        filtering_counts += f'Total input reads:\t {df.shape[0]}\n'
+        filtering_counts += f'{strand_map[strand]} strand...\nTotal input reads:\t {df.shape[0]}\n'
         ##2 Filter for sequences that contain a PASS for nanopolish
         if nanopolish_path != None:
             passed_polyA = polyA[polyA['qc_tag'] =='PASS']
@@ -119,7 +127,7 @@ if __name__ == '__main__':
             df = df[df['name'].isin(filter_cigar['sequence'].to_list())]
         filtering_counts += f"Reads with acceptable 5\' alignment:\t {df.shape[0]}\n\n"
         ##4 Filter low abundant CPAS followed by CPAS daisy chaining
-        print(df.head())
+#         print(df.head())
         CPAS_pass = CPAS_processing.filter_CPAS_noise(df['end'],CPAS_noise_filter)
         CPAS_groups = helpers.identify_daisy_chain_groups(sorted(map(int,CPAS_pass.keys())),CPAS_grouping_val)
         swapped_ends = helpers.swap_key_vals(dict(enumerate(CPAS_groups,1)))
@@ -205,7 +213,7 @@ if __name__ == '__main__':
         df_final.to_csv(output_file +f'/tmp/Isoform-deconvolution.{strand_map[strand]}.7.bed',sep = '\t',index = None)
 
         Final_df = post_pro.dataframe_editing(df_final)
-        print(len(set(Final_df['blocksizes.new'])))
+#         print(len(set(Final_df['blocksizes.new'])))
         Final_df = Final_df.sort_values(by=['end','start','blocksizes'])
         
         Final_df.to_csv(output_file+'/Final_cluster.precollapsed.' + strand_map[strand]+'.tsv',sep ='\t',index = None)
@@ -223,26 +231,28 @@ if __name__ == '__main__':
 # 
 #             current_df = current_df.sort_values(by='splicing-count',ascending = False).head(1)
 #             most_common_df = pd.concat([most_common_df,current_df])
-        most_common_df[colnames].to_csv(f'most-common-df.{strand_map[strand]}.7.bed',sep ='\t',index = None)
+#         most_common_df[colnames].to_csv(f'most-common-df.{strand_map[strand]}.7.bed',sep ='\t',index = None)
         filtering_counts += f"Number of isoforms identified:\t {len(set(most_common_df['full-id']))}\n"
 
         most_common_df = most_common_df[most_common_df['TSS-abundance-per-TU'] > TSS_abundance_per_TU]
         filtering_counts += f"Number of isoforms identified which pass TSS abundance per TU filter:\t {len(set(most_common_df['full-id']))}\n"
         most_common_df = most_common_df[most_common_df['score'] > min_transcript_abundance]
-        filtering_counts += f"Number of isoforms identified which pass minimum transcript count:\t {len(set(most_common_df['full-id']))}\n\n"
+        filtering_counts += f"Number of isoforms identified which pass minimum transcript count:\t {len(set(most_common_df['full-id']))}\n\n\n"
         
         most_common_df['name'] = most_common_df['name'] + '--' + most_common_df['TSS-abundance-per-TU'].astype(str)
         most_common_df = most_common_df.sort_values( by=['start','end','blockcount'])
         most_common_df[colnames_fwd].to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.bed',sep ='\t',index = None,header = None)
         gff3_file = bed_convert.run_BED2GFF3(most_common_df[colnames_fwd])
-        gff3_file.to_csv(output_file+'/Final_cluster.NAGATA.' + strand_map[strand]+'.gff3',sep = '\t',index = None,header = None)
+        gff3_file['feature-start'] = gff3_file['feature-start'] + 1 
+#         print(gff3_file.sort_values(by = ['feature-start','feature-end']).head(50))
+        gff3_file.sort_values(by = ['feature-start','feature-end']).to_csv(output_file+'/Final_cluster.NAGATA.' + strand_map[strand]+'.gff3',sep = '\t',index = None,header = None)
         
-        processing_file = open(f"{output_file}/Filtering-counts.{strand_map[strand]}.txt","w")
-
-
-        processing_file.write(filtering_counts)
-
-        processing_file.close() #to change file access modes
+#         processing_file = open(f"{output_file}/Filtering-counts.{strand_map[strand]}.txt","w")
+# 
+# 
+#         processing_file.write(filtering_counts)
+# 
+#         processing_file.close() #to change file access modes
         known_bed = args[reference_files_scoring[strand]]
         if known_bed != None:
             print(known_bed)
@@ -261,7 +271,12 @@ if __name__ == '__main__':
         merged_scores['total-overlap'] = merged_scores['forward'] + merged_scores['reverse']
         merged_scores.to_csv(output_file+'/merged_scoring.txt',sep = '\t',index = None)
         print(merged_scores)
+processing_file = open(f"{output_file}/Filtering-counts.txt","w")
 
+
+processing_file.write(filtering_counts)
+
+processing_file.close() #to change file access modes
         
         
         

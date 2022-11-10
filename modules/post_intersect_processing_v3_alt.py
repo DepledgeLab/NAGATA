@@ -29,7 +29,10 @@ def compare_ind_blocks(nagata_blockSizes,annotate_blockSizes,some_threshold,bloc
                 pass_threshold.append(False)
         return all(pass_threshold)
     else: 
-        return True
+        if abs(int(nagata_blockSizes.strip(','))-int(annotate_blockSizes.strip(','))) < some_threshold:
+            return True
+        else:
+            return False
 
 def run_overlap_scoring(output_file,nagata_file,annotation_file,overlap_parameter=50,ind_overlap_parameter=20):
     os.makedirs(output_file,exist_ok=True)
@@ -112,8 +115,22 @@ def run_overlap_scoring(output_file,nagata_file,annotation_file,overlap_paramete
     text_file = open(output_file +"/overlap-performance.txt", "w")
     n = text_file.write(output_string)
     text_file.close()
-    output_overlaps_df.to_csv(output_file + '/NAGATA-Annotation.overlaps.bed',sep ='\t',index = None,header = None)
-        
+    
+    multiple_overlaps = [k for k,v in Counter(output_overlaps_df[3]).items() if v>1]
+
+    tmp_df_single = output_overlaps_df[~output_overlaps_df[3].isin(multiple_overlaps)]
+    tmp_df_multiple = output_overlaps_df[output_overlaps_df[3].isin(multiple_overlaps)]
+
+
+    overlap_dict = {}
+    for i in multiple_overlaps:
+        current_df = tmp_df_multiple[tmp_df_multiple[3] == i]
+        overlap_dict[i] = ','.join(current_df[15].tolist())
+    tmp_df_multiple[15] = tmp_df_multiple[3].map(overlap_dict)
+    final_output_overlap = pd.concat([tmp_df_multiple,tmp_df_single])
+    final_output_overlap = final_output_overlap[~final_output_overlap[3].duplicated()]
+    final_output_overlap.sort_values(by=[1,2,9]).to_csv(output_file + '/NAGATA-Annotation.overlaps.bed',sep ='\t',index = None,header = None)
+#     output_overlaps_df.to_csv(output_file + '/NAGATA-Annotation.overlaps.bed',sep ='\t',index = None,header = None)
     
 if __name__ == '__main__':
     import argparse

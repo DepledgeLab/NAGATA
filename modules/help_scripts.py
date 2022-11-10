@@ -24,6 +24,11 @@ def identify_daisy_chain_groups(cpas_list,daisy_chain_val)->list:
 def create_tmp_files(input_bam:'string',output_location:'string'):
     """Takes in an imput file and creates a temp file used for actual processing
     """
+#     try:
+#         print(override, '!!!!')
+#         os.makedirs(output_location,exist_ok=override)
+#     except:
+#         print("Variable x is not defined")
     os.makedirs(output_location,exist_ok=True)
     ## Samtools to get read-ids, cigar strings, orientation into a temporary file
     samtools_p1 = subprocess.Popen(f"samtools view {input_bam}".split(' '),stdout=subprocess.PIPE)
