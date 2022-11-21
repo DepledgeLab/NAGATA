@@ -19,9 +19,9 @@ def compare_ind_blocks(nagata_blockSizes,annotate_blockSizes,some_threshold,bloc
     pass_threshold = []
     # all([True if abs(nagata_block-anno_block) < some_threshold else False  for nagata_block,anno_block in zip(x[1:],y[1:])])
     if blockCount > 1:
-        nagata_blocksize_list = list(map(int,nagata_blockSizes.strip(',').split(',')))
+        nagata_blocksize_list = list(map(int,str(nagata_blockSizes).strip(',').split(',')))
         
-        annotate_blocksize_list = list(map(int,annotate_blockSizes.strip(',').split(',')))
+        annotate_blocksize_list = list(map(int,str(annotate_blockSizes).strip(',').split(',')))
         for nagata_block,anno_block in zip(nagata_blocksize_list,annotate_blocksize_list):
             if abs(nagata_block-anno_block) < some_threshold:
                 pass_threshold.append(True)
@@ -29,7 +29,7 @@ def compare_ind_blocks(nagata_blockSizes,annotate_blockSizes,some_threshold,bloc
                 pass_threshold.append(False)
         return all(pass_threshold)
     else: 
-        if abs(int(nagata_blockSizes.strip(','))-int(annotate_blockSizes.strip(','))) < some_threshold:
+        if abs(int(str(nagata_blockSizes).strip(','))-int(str(annotate_blockSizes).strip(','))) < some_threshold:
             return True
         else:
             return False

@@ -18,7 +18,7 @@ warnings.filterwarnings("ignore")
 
 
 strand_map = {'+':'fwd','-':'rev'}
-colnames_fwd = ['chrom','start','end','name','score','strand','thickstart','thickend','itemRGB','blockcount','blocksizes','blockstarts']
+#colnames_fwd = ['chrom','start','end','name','score','strand','thickstart','thickend','itemRGB','blockcount','blocksizes','blockstarts']
 reference_files_scoring = {'+':'reference_bed_f','-':'reference_bed_r'}
 
 parsing_dictionary ={'input_file':'-i','output_directory':'-o', 'polya':'-p','soft_clip_filter':'-s','nanopolish_tag':'-nt','CPAS_noise_filter':'-c',
@@ -85,7 +85,8 @@ if __name__ == '__main__':
     parameters_df[[2,1,0]].to_csv(output_file +'/' +'parameters.tsv',header = ['flag','parameter_name','value'],sep = '\t',index = None)
     if nanopolish_path != None:
         polyA = pd.read_csv(nanopolish_path,sep = '\t',usecols =[0,9] )
-    
+        passed_polyA = polyA[polyA['qc_tag'] =='PASS']
+        passed_polyA.to_csv(output_file +f'/tmp/Passed_NANOPOLISH.bed',sep = '\t',index = None)
     final_counts = pd.DataFrame()
     #full_cluster_df = pd.DataFrame()
     filtering_counts = ""
@@ -94,16 +95,16 @@ if __name__ == '__main__':
     for strand in ['+','-']:
         
         if strand == '-':
-            colnames = ['chrom','start','end','name','score','strand','thickend','thickstart','itemRGB','blockcount','blocksizes','blockstarts']
+            colnames = ['chrom','end','start','name','score','strand','thickend','thickstart','itemRGB','blockcount','blocksizes','blockstarts']
             if is_bam:
-                df = pd.read_csv(output_file +'/tmp/' + 'raw-alignment.2.bed',sep = '\t',header = None,names = colnames)
+                df = pd.read_csv(output_file +'/tmp/' + '1.raw-alignment.bed',sep = '\t',header = None,names = colnames)
             else: 
                 df = pd.read_csv(input_file,sep = '\t',header = None,names = colnames)
 #                 print('HERE -')
         else:
             colnames = ['chrom','start','end','name','score','strand','thickstart','thickend','itemRGB','blockcount','blocksizes','blockstarts']
             if is_bam:
-                df = pd.read_csv(output_file +'/tmp/' + 'raw-alignment.2.bed',sep = '\t',header = None,names = colnames_fwd)
+                df = pd.read_csv(output_file +'/tmp/' + '1.raw-alignment.bed',sep = '\t',header = None,names = colnames)
             else: 
                 df = pd.read_csv(input_file,sep = '\t',header = None,names = colnames)
 #                 print('HERE +')
@@ -116,15 +117,17 @@ if __name__ == '__main__':
         filtering_counts += f'{strand_map[strand]} strand...\nTotal input reads:\t {df.shape[0]}\n'
         ##2 Filter for sequences that contain a PASS for nanopolish
         if nanopolish_path != None:
-            passed_polyA = polyA[polyA['qc_tag'] =='PASS']
-            passed_polyA.to_csv(output_file +f'/tmp/Passed_NANOPOLISH.{strand_map[strand]}.2.bed',sep = '\t',index = None)
+#             passed_polyA = polyA[polyA['qc_tag'] =='PASS']
+#             passed_polyA.to_csv(output_file +f'/tmp/Passed_NANOPOLISH.{strand_map[strand]}.2.bed',sep = '\t',index = None)
             df = df[df['name'].isin(passed_polyA['readname'].to_list())]
+            df.to_csv(output_file +f'/tmp/2.filter_nanopolish.{strand_map[strand]}.bed',sep = '\t',index = None)
         filtering_counts += f'Reads with readable polyA tail:\t {df.shape[0]}\n'
         ##3 Cigar string filter
         if is_bam:
             filter_cigar = TSS_soft_clip_filter.filter_sequences(cigar_file_path,cigar_filter_val,strand)
-            filter_cigar.to_csv(output_file +f'/tmp/filter_cigar.{strand_map[strand]}.3.bed',sep = '\t',index = None)
+#             filter_cigar.to_csv(output_file +f'/tmp/2.filter_cigar.{strand_map[strand]}.bed',sep = '\t',index = None)
             df = df[df['name'].isin(filter_cigar['sequence'].to_list())]
+            df.to_csv(output_file +f'/tmp/3.filter_cigar.{strand_map[strand]}.bed',sep = '\t',index = None)
         filtering_counts += f"Reads with acceptable 5\' alignment:\t {df.shape[0]}\n\n"
         ##4 Filter low abundant CPAS followed by CPAS daisy chaining
 #         print(df.head())
@@ -140,9 +143,9 @@ if __name__ == '__main__':
         filtering_counts += f"Reads remaining after CPAS noise filter:\t {df.shape[0]} \n"
         filtering_counts += f"Number of transcription units (CPAS) identified:\t {len(set(df['Transcriptional-unit']))}\n\n"
         
-        df.to_csv(output_file +f'/tmp/CPAS-grouping.{strand_map[strand]}.4.bed',sep = '\t',index = None)
+#         df.to_csv(output_file +f'/tmp/4.CPAS-grouping.{strand_map[strand]}.bed',sep = '\t',index = None)
         df['TU-count']= df['Transcriptional-unit'].map(df['Transcriptional-unit'].value_counts())
-        df.to_csv(output_file +f'/tmp/CPAS-grouping.{strand_map[strand]}.4.bed',sep = '\t',index = None)
+        df.to_csv(output_file +f'/tmp/4.CPAS-grouping.{strand_map[strand]}.bed',sep = '\t',index = None)
         
         ##5 Add columns giving unique TSS names and corresponding counts for each within each TU
         
@@ -155,7 +158,7 @@ if __name__ == '__main__':
 
         ## Daisy chaining of TSSs within TUs
         TU_with_TSS_df = TSS_processing.parse_TSS_within_TU(df,TSS_grouping_val)
-        TU_with_TSS_df.to_csv(output_file +f'/tmp/TSS-grouping.{strand_map[strand]}.5.bed',sep = '\t',index = None)
+        TU_with_TSS_df.to_csv(output_file +f'/tmp/5.TSS-grouping.{strand_map[strand]}.bed',sep = '\t',index = None)
 
         ##6 BED file correction of start, end, and blocksizes columns # df[abs(df['CPAS-diff']) > 10]
         TU_with_TSS_df['CPAS-diff'] = TU_with_TSS_df['most_abund_CPAS'] - TU_with_TSS_df['end']
@@ -163,7 +166,7 @@ if __name__ == '__main__':
         TU_with_TSS_df['end'] = TU_with_TSS_df['most_abund_CPAS']
         
         TU_with_TSS_df['TSS-diff'] = TU_with_TSS_df['most_abund_TSS_in_TU'] - TU_with_TSS_df['start']
-        TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['TSS-diff']) < 25 ]
+        TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['TSS-diff']) < 5 ]
         TU_with_TSS_df['start'] = TU_with_TSS_df['most_abund_TSS_in_TU']
         
         ### APPLY TU based cigar filter
@@ -186,7 +189,7 @@ if __name__ == '__main__':
 #         colnames = ['chrom','start','end','name','score','strand','thickstart','thickend','itemRGB','blockcount','blocksizes.new','blockstarts']
 #         df_full_correct = TU_with_TSS_df[~TU_with_TSS_df['blocksizes.new'].duplicated()]
         
-        TU_with_TSS_df.to_csv(output_file +f'/tmp/columns-fully-corrected.{strand_map[strand]}.6.bed',sep = '\t',index = None)
+        TU_with_TSS_df.to_csv(output_file +f'/tmp/6.columns-fully-corrected.{strand_map[strand]}.bed',sep = '\t',index = None)
 #         df_full_correct = TU_with_TSS_df
         ##7 Isoform deconvolution
         df_full_correct['new-name'] = TU_with_TSS_df['Transcriptional-unit'] +'-TSS_group.'+TU_with_TSS_df['TSS-group'].astype(str)
@@ -210,7 +213,7 @@ if __name__ == '__main__':
         
 #         df_final = df_final.merge(median_vals,left_on='new-name',right_on='new-name')
 
-        df_final.to_csv(output_file +f'/tmp/Isoform-deconvolution.{strand_map[strand]}.7.bed',sep = '\t',index = None)
+        df_final.to_csv(output_file +f'/tmp/7.Isoform-deconvolution.{strand_map[strand]}.bed',sep = '\t',index = None)
 
         Final_df = post_pro.dataframe_editing(df_final)
 #         print(len(set(Final_df['blocksizes.new'])))
@@ -241,8 +244,8 @@ if __name__ == '__main__':
         
         most_common_df['name'] = most_common_df['name'] + '--' + most_common_df['TSS-abundance-per-TU'].astype(str)
         most_common_df = most_common_df.sort_values( by=['start','end','blockcount'])
-        most_common_df[colnames_fwd].to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.bed',sep ='\t',index = None,header = None)
-        gff3_file = bed_convert.run_BED2GFF3(most_common_df[colnames_fwd])
+        most_common_df[colnames].to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.bed',sep ='\t',index = None,header = None)
+        gff3_file = bed_convert.run_BED2GFF3(most_common_df[colnames])
         gff3_file['feature-start'] = gff3_file['feature-start'] + 1 
 #         print(gff3_file.sort_values(by = ['feature-start','feature-end']).head(50))
         gff3_file.sort_values(by = ['feature-start','feature-end']).to_csv(output_file+'/Final_cluster.NAGATA.' + strand_map[strand]+'.gff3',sep = '\t',index = None,header = None)
@@ -256,7 +259,7 @@ if __name__ == '__main__':
         known_bed = args[reference_files_scoring[strand]]
         if known_bed != None:
             print(known_bed)
-            nagata_annot = most_common_df[colnames_fwd]
+            nagata_annot = most_common_df[colnames]
             known_df = pd.read_csv(known_bed,sep ='\t')
 #             print(known_df.head())
             nagata_file =output_file+'/Final_cluster.' + strand_map[strand]+'.bed'
@@ -264,9 +267,9 @@ if __name__ == '__main__':
             post_scoring.run_overlap_scoring(output_file_by_strand,nagata_file,known_bed,50,20)
     if known_bed != None:
         forward_overlap_score = pd.read_csv(output_file+'/overlap.' + 'fwd/' +'overlap-performance.txt',sep = '\t',names = ['class','forward'])
+#         print(forward_overlap_score)
         reverse_overlap_score = pd.read_csv(output_file+'/overlap.' + 'rev/' +'overlap-performance.txt',sep = '\t',names = ['class','reverse'])
-    #     print(forward_overlap_score)
-    #     print(reverse_overlap_score)
+
         merged_scores = forward_overlap_score.merge(reverse_overlap_score,left_on='class',right_on='class')
         merged_scores['total-overlap'] = merged_scores['forward'] + merged_scores['reverse']
         merged_scores.to_csv(output_file+'/merged_scoring.txt',sep = '\t',index = None)

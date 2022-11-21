@@ -72,10 +72,13 @@ def iso_deconv(df:'DataFrame',iso_group_vals,blocksizesum_noise_filter)-> 'DataF
         for exon_count in sorted(set(current_df['blockcount'])):
             current_df_blocks = current_df[current_df['blockcount']==exon_count]
             unique_blocksizes = [k for k,v in Counter(current_df_blocks['blocksizes.new']).items() if v>blocksizesum_noise_filter]
+#             print(unique_blocksizes)
 #             unique_blocksizes = current_df_blocks['blocksizes.new'].unique()
             grouped_blocksizes = group_by_exons(unique_blocksizes,iso_group_vals)
+#             print(grouped_blocksizes)
             blocksize_groupings = minor_formatting(grouped_blocksizes)
             current_df_blocks['exon.blocksize.group'] = current_df_blocks['blocksizes.new'].map(blocksize_groupings)
+            current_df_blocks = current_df_blocks.dropna(subset=['exon.blocksize.group'])
             current_df_blocks['exon.blocksize.group'] = current_df_blocks['blockcount'].astype(str) + '.blocksizes.' + current_df_blocks['exon.blocksize.group'].astype(str)
 #             intermediate_df = pd.concat([intermediate_df,current_df_blocks])
             Final_df = pd.concat([Final_df,current_df_blocks])

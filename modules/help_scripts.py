@@ -35,7 +35,7 @@ def create_tmp_files(input_bam:'string',output_location:'string'):
     fout_samtools = open(output_location +'/seq-cigar-orient.tmp', 'wb')
     samtools_p2 = subprocess.run(['cut','-f1,2,6'], stdin=samtools_p1.stdout, stdout=fout_samtools)
     ## Bedtools to convert BAM file to BED
-    fout_bedtools = open(output_location +'/raw-alignment.2.bed','wb')
+    fout_bedtools = open(output_location +'/1.raw-alignment.bed','wb')
     bedtools_p1 = f"bedtools bamtobed -bed12 -i {input_bam}".split(" ")
     bedtools_p2 = subprocess.run(bedtools_p1,stdout=fout_bedtools)
     print('temp files created')
