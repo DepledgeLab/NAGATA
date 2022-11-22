@@ -20,6 +20,7 @@ def get_cigar_vals(df,strand):
         df['cigar'] = df['cigar'].apply(lambda x: x[::-1])
         return_cigars_vals = [get_softclipping_TES(cig) for cig in df['cigar']]
     df['soft_clip_values'] = return_cigars_vals
+#     print(df.head())
     return df
     
 def filter_sequences(seq_cigar_file_path,filt_val,strands):
@@ -38,7 +39,7 @@ def filter_sequences(seq_cigar_file_path,filt_val,strands):
     df_cigar_calc = get_cigar_vals(df_seq_cig_current,strands)
     df_cigar_calc_filt = df_cigar_calc[df_cigar_calc['soft_clip_values'] < filt_val]
 #     final_df = pd.concat([final_df,df_cigar_calc_filt])
-    return df_cigar_calc_filt
+    return df_cigar_calc_filt,df_cigar_calc
     
 if __name__ == '__main__':
     import argparse

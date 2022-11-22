@@ -34,17 +34,20 @@ if __name__ == '__main__':
     requiredGrp = ap.add_argument_group('required arguments')
     requiredGrp.add_argument("-i",'--input_file', required=True, help="BAM file input location")
     requiredGrp.add_argument("-o",'--output_directory', required=True, help="output file location",default = '.',type = str)
-    requiredGrp.add_argument("-p",'--polya', required=False, help="nanopolish location output location (requires concatenated fwd and rev)",default = None)
-    requiredGrp.add_argument("-s",'--soft_clip_filter', required=False, help="cigar filter on TSS strand, default 12",default=3,type = float)
-    requiredGrp.add_argument("-nt",'--nanopolish_tag', required=False, help="How to apply nanopolish tag filter, P - PASS, N - NO_PASS, A - All reads (N + P)",default = 'P',type = str)
-    requiredGrp.add_argument("-c",'--CPAS_noise_filter', required=False, help="Filter out CPAS sites that have a count < c",default=20,type = int)
-    requiredGrp.add_argument("-t",'--TSS_noise_filter', required=False, help="Filter out TSS sites that have a count < c",default=4,type = int)
-    requiredGrp.add_argument("-cg",'--CPAS_clustering', required=False, help="Grouping value for clustering (CPAS), default 50",default = 50.0,type = int)
-    requiredGrp.add_argument("-tg",'--TSS_clustering', required=False, help="Grouping value for clustering (TSS), default 20",default = 20.0,type = int)
-    requiredGrp.add_argument("-iso",'--isoform_clustering', required=False, help="Grouping value for grouping blocksizes, default 50",default = 50.0,type = int)
-    requiredGrp.add_argument("-m",'--min_transcript_abundance', required=False, help="minimum transcript abundance",default = 3,type = int)
-    requiredGrp.add_argument("-a",'--TSS_abundance_per_TU', required=False, help="TSS abundance per transcriptional unit ",default = 2,type = float)
-    requiredGrp.add_argument("-b",'--blocksize_noise_filter', required=False, help="Prior to isoform deconvolution - filter out low abundant blocksize sums to prevent incorrect daisy chainging ",default = 3,type = float)
+    requiredGrp.add_argument("-p",'--polya', required=False, help="nanopolish location output location (requires concatenated fwd and rev), (default None)",default = None)
+    requiredGrp.add_argument("-s",'--soft_clip_filter', required=False, help="cigar filter on TSS strand, default 3",default=3,type = float)
+    requiredGrp.add_argument("-nt",'--nanopolish_tag', required=False, help="How to apply nanopolish tag filter, P - PASS, N - NO_PASS, A - All reads (N + P), (default P) [Not available in the version]",default = 'P',type = str)
+    requiredGrp.add_argument("-c",'--CPAS_noise_filter', required=False, help="Filter out CPAS sites that have a count < c, (default 20)",default=20,type = int)
+    requiredGrp.add_argument("-t",'--TSS_noise_filter', required=False, help="Filter out TSS sites that have a count < c, (default 4)",default=4,type = int)
+    requiredGrp.add_argument("-cg",'--CPAS_clustering', required=False, help="Grouping value for clustering (CPAS), (default 50)",default = 50.0,type = int)
+    requiredGrp.add_argument("-tg",'--TSS_clustering', required=False, help="Grouping value for clustering (TSS), (default 20)",default = 20.0,type = int)
+    requiredGrp.add_argument("-iso",'--isoform_clustering', required=False, help="Grouping value for grouping blocksizes, (default 50)",default = 50.0,type = int)
+    requiredGrp.add_argument("-m",'--min_transcript_abundance', required=False, help="minimum transcript abundance, (default 3 )",default = 3,type = int)
+    requiredGrp.add_argument("-a",'--TSS_abundance_per_TU', required=False, help="TSS abundance per transcriptional unit, (default 2)",default = 2,type = float)
+    requiredGrp.add_argument("-b",'--blocksize_noise_filter', required=False, help="Prior to isoform deconvolution - filter out low abundant blocksize sums to prevent incorrect daisy chainging, (default 3)",default = 3,type = float)
+    requiredGrp.add_argument("-pm",'--max_TSS_per_CPAS', required=False, help="After defining CPAS, get the top TSS of each and filter out if it fails to each this threshold, (default 50) ",default = 50,type = int)
+    requiredGrp.add_argument("-pt",'--padding_TSS', required=False, help="After defining a TSS with CPAS, get the most abundant TSS value and include +/-pc in the subsequent analysis, (default 10) ",default = 10,type = int)
+    requiredGrp.add_argument("-pc",'--padding_CPAS', required=False, help="After defining a CPAS, get the most abundant CPAS value and include +/-pc in the subsequent analysis,  (default 10) ",default = 10,type = int)
     requiredGrp.add_argument("-r1",'--reference_bed_f', required=False, help="reference beds for scoring",default = None,type = str)
     requiredGrp.add_argument("-r2",'--reference_bed_r', required=False, help="reference beds for scoring",default = None,type = str)
 #     requiredGrp.add_argument("-oe",'--override_existing', required=False, help="reference beds for scoring",default = False,type = bool)
@@ -68,7 +71,9 @@ if __name__ == '__main__':
     TSS_abundance_per_TU = float(args['TSS_abundance_per_TU'])
     np_tag = str(args['nanopolish_tag'])
     blocksizesum_noise_filter = int(args['blocksize_noise_filter'])
-    
+    max_TSS_per_CPAS = int(args['max_TSS_per_CPAS'])
+    padding_TSS = int(args['padding_TSS'])
+    padding_CPAS = int(args['padding_CPAS'])
 #     override_existing = bool(args['override_existing'])
 #     known_beds_f = args['reference_beds_f']
 #     known_beds_r = args['reference_bed_r']
@@ -124,13 +129,15 @@ if __name__ == '__main__':
         filtering_counts += f'Reads with readable polyA tail:\t {df.shape[0]}\n'
         ##3 Cigar string filter
         if is_bam:
-            filter_cigar = TSS_soft_clip_filter.filter_sequences(cigar_file_path,cigar_filter_val,strand)
+            filter_cigar,cigar_df = TSS_soft_clip_filter.filter_sequences(cigar_file_path,cigar_filter_val,strand)
+            cigar_df.to_csv(output_file +f'/tmp/parsed.cigar.{strand_map[strand]}.tsv',sep = '\t',index = None)
+#             print(cigar_df.head())
 #             filter_cigar.to_csv(output_file +f'/tmp/2.filter_cigar.{strand_map[strand]}.bed',sep = '\t',index = None)
             df = df[df['name'].isin(filter_cigar['sequence'].to_list())]
             df.to_csv(output_file +f'/tmp/3.filter_cigar.{strand_map[strand]}.bed',sep = '\t',index = None)
         filtering_counts += f"Reads with acceptable 5\' alignment:\t {df.shape[0]}\n\n"
         ##4 Filter low abundant CPAS followed by CPAS daisy chaining
-#         print(df.head())
+
         CPAS_pass = CPAS_processing.filter_CPAS_noise(df['end'],CPAS_noise_filter)
         CPAS_groups = helpers.identify_daisy_chain_groups(sorted(map(int,CPAS_pass.keys())),CPAS_grouping_val)
         swapped_ends = helpers.swap_key_vals(dict(enumerate(CPAS_groups,1)))
@@ -147,6 +154,18 @@ if __name__ == '__main__':
         df['TU-count']= df['Transcriptional-unit'].map(df['Transcriptional-unit'].value_counts())
         df.to_csv(output_file +f'/tmp/4.CPAS-grouping.{strand_map[strand]}.bed',sep = '\t',index = None)
         
+#### FILTER OUT TU by most abundant TSS count (prior to any TSS grouping)        
+        
+        retain_TU = []
+        for i in set(df['Transcriptional-unit']):
+            current_df = df[df['Transcriptional-unit'] == i]
+            most_abundant_TSS_count = current_df['start'].value_counts().head(1).to_list()[0]
+            if most_abundant_TSS_count > max_TSS_per_CPAS:
+                retain_TU.append(i)
+        df = df[df['Transcriptional-unit'].isin(retain_TU)]
+#### 
+
+
         ##5 Add columns giving unique TSS names and corresponding counts for each within each TU
         
         df['TSS.unique'] = df['Transcriptional-unit']+ '-TSS.' + df['start'].astype(str)
@@ -162,11 +181,12 @@ if __name__ == '__main__':
 
         ##6 BED file correction of start, end, and blocksizes columns # df[abs(df['CPAS-diff']) > 10]
         TU_with_TSS_df['CPAS-diff'] = TU_with_TSS_df['most_abund_CPAS'] - TU_with_TSS_df['end']
-        TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['CPAS-diff']) < 25 ]
+        TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['CPAS-diff']) < padding_CPAS ]
         TU_with_TSS_df['end'] = TU_with_TSS_df['most_abund_CPAS']
         
         TU_with_TSS_df['TSS-diff'] = TU_with_TSS_df['most_abund_TSS_in_TU'] - TU_with_TSS_df['start']
-        TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['TSS-diff']) < 5 ]
+#         TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['TSS-diff']) < 5 ]
+        TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['TSS-diff']) < padding_TSS ]
         TU_with_TSS_df['start'] = TU_with_TSS_df['most_abund_TSS_in_TU']
         
         ### APPLY TU based cigar filter
@@ -194,7 +214,7 @@ if __name__ == '__main__':
         ##7 Isoform deconvolution
         df_full_correct['new-name'] = TU_with_TSS_df['Transcriptional-unit'] +'-TSS_group.'+TU_with_TSS_df['TSS-group'].astype(str)
         ## New unique name for reads
-
+        TU_with_TSS_df.to_csv(output_file +f'/tmp/6.TEST_top_TSS_FILTER.{strand_map[strand]}.bed',sep = '\t',index = None)
         
         ## Get sum of each blocksizes and abundance of each 
         df_full_correct['blocksize-sum'] = blocksize_processing.get_blocksize_length(df_full_correct['blocksizes.new'])
