@@ -22,8 +22,8 @@ strand_map = {'+':'fwd','-':'rev'}
 reference_files_scoring = {'+':'reference_bed_f','-':'reference_bed_r'}
 
 parsing_dictionary ={'input_file':'-i','output_directory':'-o', 'polya':'-p','soft_clip_filter':'-s','nanopolish_tag':'-nt','CPAS_noise_filter':'-c',
-'TSS_noise_filter':'-t', 'CPAS_clustering':'-cg','TSS_clustering':'-tg','isoform_clustering':'-iso','min_transcript_abundance':'-m','TSS_abundance_per_TU':'a',
-'blocksize_noise_filter':'-b','reference_bed_f':'-r1','reference_bed_r':'-r2'}
+'TSS_noise_filter':'-t', 'CPAS_clustering':'-cg','TSS_clustering':'-tg','isoform_clustering':'-iso','min_transcript_abundance':'-m','TSS_abundance_per_TU':'-a',
+'blocksize_noise_filter':'-b','reference_bed_f':'-r1','reference_bed_r':'-r2','max_TSS_per_CPAS':'-pm','padding_TSS':'-pt','padding_CPAS':'-pc'}
 
 
 if __name__ == '__main__':
