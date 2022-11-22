@@ -214,7 +214,7 @@ if __name__ == '__main__':
         ##7 Isoform deconvolution
         df_full_correct['new-name'] = TU_with_TSS_df['Transcriptional-unit'] +'-TSS_group.'+TU_with_TSS_df['TSS-group'].astype(str)
         ## New unique name for reads
-        TU_with_TSS_df.to_csv(output_file +f'/tmp/6.TEST_top_TSS_FILTER.{strand_map[strand]}.bed',sep = '\t',index = None)
+#         TU_with_TSS_df.to_csv(output_file +f'/tmp/6.TEST_top_TSS_FILTER.{strand_map[strand]}.bed',sep = '\t',index = None)
         
         ## Get sum of each blocksizes and abundance of each 
         df_full_correct['blocksize-sum'] = blocksize_processing.get_blocksize_length(df_full_correct['blocksizes.new'])
