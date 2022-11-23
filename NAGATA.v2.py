@@ -156,13 +156,13 @@ if __name__ == '__main__':
         
 #### FILTER OUT TU by most abundant TSS count (prior to any TSS grouping)        
         
-        retain_TU = []
-        for i in set(df['Transcriptional-unit']):
-            current_df = df[df['Transcriptional-unit'] == i]
-            most_abundant_TSS_count = current_df['start'].value_counts().head(1).to_list()[0]
-            if most_abundant_TSS_count > max_TSS_per_CPAS:
-                retain_TU.append(i)
-        df = df[df['Transcriptional-unit'].isin(retain_TU)]
+#         retain_TU = []
+#         for i in set(df['Transcriptional-unit']):
+#             current_df = df[df['Transcriptional-unit'] == i]
+#             most_abundant_TSS_count = current_df['start'].value_counts().head(1).to_list()[0]
+#             if most_abundant_TSS_count > max_TSS_per_CPAS:
+#                 retain_TU.append(i)
+#         df = df[df['Transcriptional-unit'].isin(retain_TU)]
 #### 
 
 
@@ -215,7 +215,19 @@ if __name__ == '__main__':
         df_full_correct['new-name'] = TU_with_TSS_df['Transcriptional-unit'] +'-TSS_group.'+TU_with_TSS_df['TSS-group'].astype(str)
         ## New unique name for reads
 #         TU_with_TSS_df.to_csv(output_file +f'/tmp/6.TEST_top_TSS_FILTER.{strand_map[strand]}.bed',sep = '\t',index = None)
-        
+#### TOP TSS per TU FILTER 
+        retain_TU = []
+        print(len(set(df_full_correct['new-name'])))
+        for i in set(df_full_correct['new-name']):
+            current_df = df_full_correct[df_full_correct['new-name'] == i]
+            most_abundant_TSS_count = current_df['thickstart'].value_counts().head(1).to_list()[0]
+            if most_abundant_TSS_count > max_TSS_per_CPAS:
+                retain_TU.append(i)
+        df_full_correct = df_full_correct[df_full_correct['new-name'].isin(retain_TU)]
+        print(len(set(df_full_correct['new-name'])))
+
+
+
         ## Get sum of each blocksizes and abundance of each 
         df_full_correct['blocksize-sum'] = blocksize_processing.get_blocksize_length(df_full_correct['blocksizes.new'])
 
