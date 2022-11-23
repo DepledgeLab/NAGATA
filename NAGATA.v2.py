@@ -46,7 +46,7 @@ if __name__ == '__main__':
     requiredGrp.add_argument("-a",'--TSS_abundance_per_TU', required=False, help="TSS abundance per transcriptional unit, (default 2)",default = 2,type = float)
     requiredGrp.add_argument("-b",'--blocksize_noise_filter', required=False, help="Prior to isoform deconvolution - filter out low abundant blocksize sums to prevent incorrect daisy chainging, (default 3)",default = 3,type = float)
     requiredGrp.add_argument("-pm",'--max_TSS_per_CPAS', required=False, help="After defining CPAS, get the top TSS of each and filter out if it fails to each this threshold, (default 50) ",default = 50,type = int)
-    requiredGrp.add_argument("-pt",'--padding_TSS', required=False, help="After defining a TSS with CPAS, get the most abundant TSS value and include +/-pc in the subsequent analysis, (default 10) ",default = 10,type = int)
+    requiredGrp.add_argument("-pt",'--padding_TSS', required=False, help="After defining a TSS with CPAS, get the most abundant TSS value and include +/-pc in the subsequent analysis, (default 10) ",default = 30,type = int)
     requiredGrp.add_argument("-pc",'--padding_CPAS', required=False, help="After defining a CPAS, get the most abundant CPAS value and include +/-pc in the subsequent analysis,  (default 10) ",default = 10,type = int)
     requiredGrp.add_argument("-r1",'--reference_bed_f', required=False, help="reference beds for scoring",default = None,type = str)
     requiredGrp.add_argument("-r2",'--reference_bed_r', required=False, help="reference beds for scoring",default = None,type = str)
@@ -139,8 +139,24 @@ if __name__ == '__main__':
         ##4 Filter low abundant CPAS followed by CPAS daisy chaining
 
         CPAS_pass = CPAS_processing.filter_CPAS_noise(df['end'],CPAS_noise_filter)
+        
         CPAS_groups = helpers.identify_daisy_chain_groups(sorted(map(int,CPAS_pass.keys())),CPAS_grouping_val)
-        swapped_ends = helpers.swap_key_vals(dict(enumerate(CPAS_groups,1)))
+#         print(CPAS_groups)
+
+        new_CPAS_groups = []
+        for i in CPAS_groups:
+            df_identified_groups = df[df['end'].isin(i)]
+#             print(i)
+            most_abundant_cpas = df_identified_groups['end'].value_counts().head(1).index[0]
+            tmp_df = df.copy()
+            tmp_df['absolute_end'] = abs(df['end']-most_abundant_cpas)
+
+            tmp_df = tmp_df[tmp_df['absolute_end'] < padding_CPAS/2]
+            new_CPAS_groups.append(sorted(set(tmp_df['end'])))
+#             updated_df = pd.concat([updated_df,tmp_df])
+#             print(tmp_df['end'].value_counts())
+
+        swapped_ends = helpers.swap_key_vals(dict(enumerate(new_CPAS_groups,1)))
         df['Transcriptional-unit'] = df['end'].astype(int).map(swapped_ends)
         df = df[df['Transcriptional-unit'].notna()]
         df['Transcriptional-unit'] = 'TU.' + df['Transcriptional-unit'].astype(int).astype(str)
@@ -173,20 +189,21 @@ if __name__ == '__main__':
         df['TSS-count'] = df['TSS.unique'].map(df['TSS.unique'].value_counts())
         ## Filter unique TSSs by noise filter
         df = df[df['TSS-count']>TSS_noise_filter]
+#         print(df.head())
         filtering_counts += f"Number of unique TSS values after noise filtering:\t {len(set(df['TSS.unique']))}\n\n"
 
         ## Daisy chaining of TSSs within TUs
-        TU_with_TSS_df = TSS_processing.parse_TSS_within_TU(df,TSS_grouping_val)
+        TU_with_TSS_df = TSS_processing.parse_TSS_within_TU(df,TSS_grouping_val,padding_TSS)
         TU_with_TSS_df.to_csv(output_file +f'/tmp/5.TSS-grouping.{strand_map[strand]}.bed',sep = '\t',index = None)
 
         ##6 BED file correction of start, end, and blocksizes columns # df[abs(df['CPAS-diff']) > 10]
         TU_with_TSS_df['CPAS-diff'] = TU_with_TSS_df['most_abund_CPAS'] - TU_with_TSS_df['end']
-        TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['CPAS-diff']) < padding_CPAS ]
+#         TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['CPAS-diff']) < padding_CPAS/2 ]
         TU_with_TSS_df['end'] = TU_with_TSS_df['most_abund_CPAS']
         
         TU_with_TSS_df['TSS-diff'] = TU_with_TSS_df['most_abund_TSS_in_TU'] - TU_with_TSS_df['start']
 #         TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['TSS-diff']) < 5 ]
-        TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['TSS-diff']) < padding_TSS ]
+#         TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['TSS-diff']) < padding_TSS/2 ]
         TU_with_TSS_df['start'] = TU_with_TSS_df['most_abund_TSS_in_TU']
         
         ### APPLY TU based cigar filter
