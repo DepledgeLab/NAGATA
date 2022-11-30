@@ -64,35 +64,76 @@ def compare_ind_blocks(nagata_blockSizes,annotate_blockSizes,some_threshold):
         else:
             pass_threshold.append(False)
     return all(pass_threshold)
+def get_groups(seedgroups,current_df,iso_group_vals):
+    final_blocksize_groups = defaultdict(list)
+    for i in list(set(current_df['blocksizes.new'])):
+        for k,v in seedgroups.items():
+            seed_value = list(map(int,v[0].split(',')))
+            compare_value = list(map(int,i.split(',')))
+            if compare_ind_blocks(compare_value,seed_value,iso_group_vals) == True:
+                final_blocksize_groups[k].append(compare_value)
+    return dict(final_blocksize_groups)
     
 def iso_deconv(df:'DataFrame',iso_group_vals,blocksizesum_noise_filter)-> 'DataFrame':
     Final_df = pd.DataFrame()
-    for TU_TSS in sorted(set(df['new-name'])):
-        current_df = df[df['new-name'] == TU_TSS]
-        for exon_count in sorted(set(current_df['blockcount'])):
-            current_df_blocks = current_df[current_df['blockcount']==exon_count]
-            unique_blocksizes = [k for k,v in Counter(current_df_blocks['blocksizes.new']).items() if v>blocksizesum_noise_filter]
-#             print(unique_blocksizes)
-#             unique_blocksizes = current_df_blocks['blocksizes.new'].unique()
-            grouped_blocksizes = group_by_exons(unique_blocksizes,iso_group_vals)
-#             print(grouped_blocksizes)
-            blocksize_groupings = minor_formatting(grouped_blocksizes)
-            current_df_blocks['exon.blocksize.group'] = current_df_blocks['blocksizes.new'].map(blocksize_groupings)
-            current_df_blocks = current_df_blocks.dropna(subset=['exon.blocksize.group'])
-            current_df_blocks['exon.blocksize.group'] = current_df_blocks['blockcount'].astype(str) + '.blocksizes.' + current_df_blocks['exon.blocksize.group'].astype(str)
-#             intermediate_df = pd.concat([intermediate_df,current_df_blocks])
-            Final_df = pd.concat([Final_df,current_df_blocks])
-    Final_df['full-id'] = Final_df['new-name'] +'-'+ Final_df['exon.blocksize.group']
-    output_df = pd.DataFrame()
-    for unique_groups in Final_df['full-id'].unique():
-        current_df = Final_df[Final_df['full-id'] == unique_groups]
-        blockstarts_group = group_by_exons(current_df['blockstarts'].unique(),iso_group_vals)
-        blocksize_groupings = minor_formatting(blockstarts_group)
-        current_df['blockstart_group'] = current_df['blockstarts'].map(blocksize_groupings)
-        current_df['full-id'] = current_df['full-id'] +'.' +current_df['blockstart_group'].astype(str)
-        output_df = pd.concat([output_df,current_df])
-    return output_df
-    
+    for blockcounts in set(df['new-name.ex']):
+        current_df = df[df['new-name.ex'] == blockcounts]
+        unique_blocksizes = [k for k,v in Counter(current_df['blocksizes.new']).items() if v>blocksizesum_noise_filter]
+        grouped_blocksizes = group_by_exons(unique_blocksizes,iso_group_vals)
+        seed_groupings = defaultdict(list)
+        for k,v in grouped_blocksizes.items():
+            edit_vv = [','.join(list(map(str,vv))) for vv in v ]
+            df_identified_groups = current_df[current_df['blocksizes.new'].isin(edit_vv)]
+            most_abundant_blocksize = df_identified_groups['blocksizes.new'].value_counts().head(1).index[0]
+            seed_groupings[k].append(most_abundant_blocksize)
+        blocksize_groups = get_groups(seed_groupings,current_df,iso_group_vals)
+        swap_key_values_pairs = minor_formatting(blocksize_groups)
+        current_df['blocksize_group'] = current_df['blocksizes.new'].map(swap_key_values_pairs)
+        current_df = current_df[current_df['blocksize_group'].notna()]
+        current_df['blocksize_group'] = current_df['blocksize_group'].astype(int).astype(str)
+        Final_df = pd.concat([Final_df,current_df])
+    Final_df['full-id'] = Final_df['new-name.ex'] +'-'+ Final_df['blocksize_group']
+#     output_df = pd.DataFrame()
+#     for unique_groups in Final_df['full-id'].unique():
+#         current_df = Final_df[Final_df['full-id'] == unique_groups]
+#         blockstarts_group = group_by_exons(current_df['blockstarts'].unique(),iso_group_vals)
+#         blocksize_groupings = minor_formatting(blockstarts_group)
+#         current_df['blockstart_group'] = current_df['blockstarts'].map(blocksize_groupings)
+#         current_df['full-id'] = current_df['full-id'] +'.' +current_df['blockstart_group'].astype(str)
+#         output_df = pd.concat([output_df,current_df])
+    return Final_df
+
+
+
+  
+#2 def iso_deconv(df:'DataFrame',iso_group_vals,blocksizesum_noise_filter)-> 'DataFrame':
+#     Final_df = pd.DataFrame()
+#     for TU_TSS in sorted(set(df['new-name'])):
+#         current_df = df[df['new-name'] == TU_TSS]
+#         for exon_count in sorted(set(current_df['blockcount'])):
+#             current_df_blocks = current_df[current_df['blockcount']==exon_count]
+#             unique_blocksizes = [k for k,v in Counter(current_df_blocks['blocksizes.new']).items() if v>blocksizesum_noise_filter]
+# #             print(unique_blocksizes)
+# #             unique_blocksizes = current_df_blocks['blocksizes.new'].unique()
+#             grouped_blocksizes = group_by_exons(unique_blocksizes,iso_group_vals)
+# #             print(grouped_blocksizes)
+#             blocksize_groupings = minor_formatting(grouped_blocksizes)
+#             current_df_blocks['exon.blocksize.group'] = current_df_blocks['blocksizes.new'].map(blocksize_groupings)
+#             current_df_blocks = current_df_blocks.dropna(subset=['exon.blocksize.group'])
+#             current_df_blocks['exon.blocksize.group'] = current_df_blocks['blockcount'].astype(str) + '.blocksizes.' + current_df_blocks['exon.blocksize.group'].astype(str)
+# #             intermediate_df = pd.concat([intermediate_df,current_df_blocks])
+#             Final_df = pd.concat([Final_df,current_df_blocks])
+#     Final_df['full-id'] = Final_df['new-name'] +'-'+ Final_df['exon.blocksize.group']
+#     output_df = pd.DataFrame()
+#     for unique_groups in Final_df['full-id'].unique():
+#         current_df = Final_df[Final_df['full-id'] == unique_groups]
+#         blockstarts_group = group_by_exons(current_df['blockstarts'].unique(),iso_group_vals)
+#         blocksize_groupings = minor_formatting(blockstarts_group)
+#         current_df['blockstart_group'] = current_df['blockstarts'].map(blocksize_groupings)
+#         current_df['full-id'] = current_df['full-id'] +'.' +current_df['blockstart_group'].astype(str)
+#         output_df = pd.concat([output_df,current_df])
+#     return output_df
+#     
     
     
     
