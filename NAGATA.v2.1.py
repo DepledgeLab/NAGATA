@@ -140,6 +140,7 @@ if __name__ == '__main__':
 
         CPAS_pass = CPAS_processing.filter_CPAS_noise(df['end'],CPAS_noise_filter)
         CPAS_groups = helpers.identify_daisy_chain_groups(sorted(map(int,CPAS_pass.keys())),CPAS_grouping_val)
+        print(CPAS_groups)
 #         print(CPAS_groups)
         new_CPAS_groups = []
         for i in CPAS_groups:
@@ -149,11 +150,11 @@ if __name__ == '__main__':
             tmp_df = df.copy()
             tmp_df['absolute_end'] = abs(df['end']-most_abundant_cpas)
 
-            tmp_df = tmp_df[tmp_df['absolute_end'] < CPAS_grouping_val/2]
+            tmp_df = tmp_df[tmp_df['absolute_end'] <= CPAS_grouping_val/2]
             new_CPAS_groups.append(sorted(set(tmp_df['end'])))
 #             updated_df = pd.concat([updated_df,tmp_df])
 #             print(tmp_df['end'].value_counts())
-
+        print(new_CPAS_groups)
         swapped_ends = helpers.swap_key_vals(dict(enumerate(new_CPAS_groups,1)))
         df['Transcriptional-unit'] = df['end'].astype(int).map(swapped_ends)
         df = df[df['Transcriptional-unit'].notna()]
@@ -180,7 +181,7 @@ if __name__ == '__main__':
             tmp_df = df.copy()
             tmp_df['absolute_start'] = abs(df['start']-most_abundant_tss)
 
-            tmp_df = tmp_df[tmp_df['absolute_start'] < TSS_grouping_val/2]
+            tmp_df = tmp_df[tmp_df['absolute_start'] <= TSS_grouping_val/2]
             new_TSS_groups.append(sorted(set(tmp_df['start'])))        
 #         print('CPAS groups:',new_CPAS_groups)
         swapped_starts = helpers.swap_key_vals(dict(enumerate(new_TSS_groups,1)))
@@ -240,9 +241,9 @@ if __name__ == '__main__':
 #         most_common_df[colnames].to_csv(f'most-common-df.{strand_map[strand]}.7.bed',sep ='\t',index = None)
         filtering_counts += f"Number of isoforms identified:\t {len(set(most_common_df['full-id']))}\n"
 
-        most_common_df = most_common_df[most_common_df['TSS-abundance-per-TU'] > TSS_abundance_per_TU]
+        most_common_df = most_common_df[most_common_df['TSS-abundance-per-TU'] >= TSS_abundance_per_TU]
         filtering_counts += f"Number of isoforms identified which pass TSS abundance per TU filter:\t {len(set(most_common_df['full-id']))}\n"
-        most_common_df = most_common_df[most_common_df['score'] > min_transcript_abundance]
+        most_common_df = most_common_df[most_common_df['score'] >= min_transcript_abundance]
         filtering_counts += f"Number of isoforms identified which pass minimum transcript count:\t {len(set(most_common_df['full-id']))}\n\n\n"
         
         most_common_df['name'] = most_common_df['name'] + '--' + most_common_df['TSS-abundance-per-TU'].astype(str)

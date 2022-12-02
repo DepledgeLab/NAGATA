@@ -59,7 +59,7 @@ def minor_formatting(blocksize_groupings):
 def compare_ind_blocks(nagata_blockSizes,annotate_blockSizes,some_threshold):
     pass_threshold = []
     for nagata_block,anno_block in zip(nagata_blockSizes,annotate_blockSizes):
-        if abs(int(nagata_block)-int(anno_block)) < some_threshold:
+        if abs(int(nagata_block)-int(anno_block)) <= some_threshold:
             pass_threshold.append(True)
         else:
             pass_threshold.append(False)
@@ -76,9 +76,10 @@ def get_groups(seedgroups,current_df,iso_group_vals):
     
 def iso_deconv(df:'DataFrame',iso_group_vals,blocksizesum_noise_filter)-> 'DataFrame':
     Final_df = pd.DataFrame()
+    
     for blockcounts in set(df['new-name.ex']):
-        current_df = df[df['new-name.ex'] == blockcounts]
-        unique_blocksizes = [k for k,v in Counter(current_df['blocksizes.new']).items() if v>blocksizesum_noise_filter]
+        current_df = df[df['new-name.ex'] == blockcounts].sort_values(by = 'blocksize-sum')
+        unique_blocksizes = [k for k,v in Counter(current_df['blocksizes.new']).items() if v>=blocksizesum_noise_filter]
         grouped_blocksizes = group_by_exons(unique_blocksizes,iso_group_vals)
         seed_groupings = defaultdict(list)
         for k,v in grouped_blocksizes.items():
