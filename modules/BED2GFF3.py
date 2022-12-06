@@ -72,7 +72,7 @@ def get_parent_info(test):
     return parent_dict
     
     
-def run_BED2GFF3(df):
+def run_BED2GFF3(df,color):
     df.columns = list(range(12))
     df[12] = [i.split('-')[0] for i in df[3]]
     final_GFF = pd.DataFrame()
@@ -82,7 +82,12 @@ def run_BED2GFF3(df):
         get_mrna =return_mRNA(current_TU)
         get_exon = return_exon(current_TU)
         final_GFF = pd.concat([final_GFF,get_gene,get_mrna,get_exon])
-    return final_GFF
+    if color == None:
+        return final_GFF
+    else:
+        edit_atr = [atr +f';color=#{color}'  if type_ == 'mRNA' else atr for type_,atr in zip(final_GFF['feature-type'],final_GFF['atr'])]
+        final_GFF['atr'] = edit_atr
+        return final_GFF
 
 if __name__ == '__main__':
     import argparse

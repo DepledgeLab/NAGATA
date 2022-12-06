@@ -1,7 +1,8 @@
 import pandas as pd
 import re
-
+import pandas as pd
 import warnings
+
 warnings.filterwarnings("ignore")
 
 def get_softclipping_TES(s):
@@ -53,7 +54,9 @@ if __name__ == '__main__':
     input_file = args['input_file']
     output_file = args['output_location']
     filter_value = float(args['filter_value'])
-    final_df = filter_sequences(input_file,filter_value,0)
+    input_file_df = pd.read_csv(input_file,sep = '\t')
+    print(input_file_df)
+#     final_df = filter_sequences(input_file,filter_value,0)
 #     print(final_df)
     final_df.to_csv(output_file,sep = '\t',index = None)
     

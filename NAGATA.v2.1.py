@@ -140,7 +140,7 @@ if __name__ == '__main__':
 
         CPAS_pass = CPAS_processing.filter_CPAS_noise(df['end'],CPAS_noise_filter)
         CPAS_groups = helpers.identify_daisy_chain_groups(sorted(map(int,CPAS_pass.keys())),CPAS_grouping_val)
-        print(CPAS_groups)
+#         print(CPAS_groups)
 #         print(CPAS_groups)
         new_CPAS_groups = []
         for i in CPAS_groups:
@@ -154,7 +154,7 @@ if __name__ == '__main__':
             new_CPAS_groups.append(sorted(set(tmp_df['end'])))
 #             updated_df = pd.concat([updated_df,tmp_df])
 #             print(tmp_df['end'].value_counts())
-        print(new_CPAS_groups)
+#         print(new_CPAS_groups)
         swapped_ends = helpers.swap_key_vals(dict(enumerate(new_CPAS_groups,1)))
         df['Transcriptional-unit'] = df['end'].astype(int).map(swapped_ends)
         df = df[df['Transcriptional-unit'].notna()]
@@ -249,7 +249,7 @@ if __name__ == '__main__':
         most_common_df['name'] = most_common_df['name'] + '--' + most_common_df['TSS-abundance-per-TU'].astype(str)
         most_common_df = most_common_df.sort_values( by=['start','end','blockcount'])
         most_common_df[colnames].to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.bed',sep ='\t',index = None,header = None)
-        gff3_file = bed_convert.run_BED2GFF3(most_common_df[colnames])
+        gff3_file = bed_convert.run_BED2GFF3(most_common_df[colnames],None)
         gff3_file['feature-start'] = gff3_file['feature-start'] + 1 
 #         print(gff3_file.sort_values(by = ['feature-start','feature-end']).head(50))
         gff3_file.sort_values(by = ['feature-start','feature-end']).to_csv(output_file+'/Final_cluster.NAGATA.' + strand_map[strand]+'.gff3',sep = '\t',index = None,header = None)
@@ -268,7 +268,23 @@ if __name__ == '__main__':
 #             print(known_df.head())
             nagata_file =output_file+'/Final_cluster.' + strand_map[strand]+'.bed'
             output_file_by_strand = output_file + '/overlap.' + strand_map[strand]
-            post_scoring.run_overlap_scoring(output_file_by_strand,nagata_file,known_bed,50,20)
+            final_output_overlap, nagata_specific, annotation_specific = post_scoring.run_overlap_scoring(output_file_by_strand,nagata_file,known_bed,50,20)
+            
+            gff3_file_overlap = bed_convert.run_BED2GFF3(final_output_overlap,'4C33FF')
+            gff3_file_nagata = bed_convert.run_BED2GFF3(nagata_specific,'FF3333')
+            gff3_file_annotation = bed_convert.run_BED2GFF3(annotation_specific,'B0AEAE')
+            
+            final_overlap_gff = pd.concat([gff3_file_overlap,gff3_file_nagata])
+            final_overlap_gff['feature-start'] = final_overlap_gff['feature-start'] + 1 
+            final_overlap_gff.sort_values(by = ['feature-start','feature-end']).to_csv(output_file+'/Final_cluster.NAGATA.' + strand_map[strand]+'.gff3',sep = '\t',index = None,header = None)
+            
+            gff3_file_overlap.sort_values(by = ['feature-start','feature-end']).to_csv(output_file_by_strand+'/NAGATA.annotation.overlap.' + strand_map[strand]+'.gff3',sep = '\t',index = None,header = None)
+            gff3_file_nagata.sort_values(by = ['feature-start','feature-end']).to_csv(output_file_by_strand+'/NAGATA.specific.' + strand_map[strand]+'.gff3',sep = '\t',index = None,header = None)
+            gff3_file_annotation.sort_values(by = ['feature-start','feature-end']).to_csv(output_file_by_strand+'/Annotation.specific.' + strand_map[strand]+'.gff3',sep = '\t',index = None,header = None)
+            print(output_file_by_strand)
+#             print('OVERLAPS',gff3_file_overlap)
+#             print('NAGATA',gff3_file_nagata)
+#             print('ANNOTATION',annotation_overlaps)
     if known_bed != None:
         forward_overlap_score = pd.read_csv(output_file+'/overlap.' + 'fwd/' +'overlap-performance.txt',sep = '\t',names = ['class','forward'])
 #         print(forward_overlap_score)
@@ -284,165 +300,6 @@ processing_file = open(f"{output_file}/Filtering-counts.txt","w")
 processing_file.write(filtering_counts)
 
 processing_file.close() #to change file access modes
-#### FILTER OUT TU by most abundant TSS count (prior to any TSS grouping)        
-        
-#         retain_TU = []
-#         for i in set(df['Transcriptional-unit']):
-#             current_df = df[df['Transcriptional-unit'] == i]
-#             most_abundant_TSS_count = current_df['start'].value_counts().head(1).to_list()[0]
-#             if most_abundant_TSS_count > max_TSS_per_CPAS:
-#                 retain_TU.append(i)
-#         df = df[df['Transcriptional-unit'].isin(retain_TU)]
-#### 
 
-
-        ##5 Add columns giving unique TSS names and corresponding counts for each within each TU
-#         
-#         df['TSS.unique'] = df['Transcriptional-unit']+ '-TSS.' + df['start'].astype(str)
-#         filtering_counts += f"Number of unique TSS values:\t {len(set(df['TSS.unique']))}\n"
-#         df['TSS-count'] = df['TSS.unique'].map(df['TSS.unique'].value_counts())
-#         ## Filter unique TSSs by noise filter
-#         df = df[df['TSS-count']>TSS_noise_filter]
-# #         print(df.head())
-#         filtering_counts += f"Number of unique TSS values after noise filtering:\t {len(set(df['TSS.unique']))}\n\n"
-# 
-#         ## Daisy chaining of TSSs within TUs
-#         TU_with_TSS_df = TSS_processing.parse_TSS_within_TU(df,TSS_grouping_val,padding_TSS)
-#         TU_with_TSS_df.to_csv(output_file +f'/tmp/5.TSS-grouping.{strand_map[strand]}.bed',sep = '\t',index = None)
-# 
-#         ##6 BED file correction of start, end, and blocksizes columns # df[abs(df['CPAS-diff']) > 10]
-#         TU_with_TSS_df['CPAS-diff'] = TU_with_TSS_df['most_abund_CPAS'] - TU_with_TSS_df['end']
-# #         TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['CPAS-diff']) < padding_CPAS/2 ]
-#         TU_with_TSS_df['end'] = TU_with_TSS_df['most_abund_CPAS']
-#         
-#         TU_with_TSS_df['TSS-diff'] = TU_with_TSS_df['most_abund_TSS_in_TU'] - TU_with_TSS_df['start']
-# #         TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['TSS-diff']) < 5 ]
-# #         TU_with_TSS_df = TU_with_TSS_df[abs(TU_with_TSS_df['TSS-diff']) < padding_TSS/2 ]
-#         TU_with_TSS_df['start'] = TU_with_TSS_df['most_abund_TSS_in_TU']
-        
-        ### APPLY TU based cigar filter
-        
-        # TU_with_TSS_df = TU_with_TSS_df.merge(filter_cigar[['sequence','soft_clip_values']],left_on = 'name',right_on='sequence')
-#         TU['TU_soft_clipping'] = 
-        ####
-        ## Correct 1st and last blocksize values using TSS-diff and CPAS-diff values respectively 
-#         print(len(set(TU_with_TSS_df['blocksizes'])))
-#         TU_with_TSS_df[TU_with_TSS_df['blocksizes']]
-#         TU_with_TSS_df = TU_with_TSS_df[~TU_with_TSS_df['blocksizes'].duplicated()]
-#         TU_with_TSS_df[colnames].to_csv(f'Ad5.nocorrection.{strand_map[strand]}.bed',sep = '\t',header = None,index = None)
-#         print(TU_with_TSS_df.head(),TU_with_TSS_df.columns)
-#         TU_with_TSS_df = blocksize_processing.correct_last(TU_with_TSS_df) ###
-# 
-#         TU_with_TSS_df = blocksize_processing.correct_first(TU_with_TSS_df)  ###
-#         df_full_correct = TU_with_TSS_df
-# #         print(df_full_correct.columns)
-# #         print(len(set(df_full_correct['blocksizes.new'])))
-# #         colnames = ['chrom','start','end','name','score','strand','thickstart','thickend','itemRGB','blockcount','blocksizes.new','blockstarts']
-# #         df_full_correct = TU_with_TSS_df[~TU_with_TSS_df['blocksizes.new'].duplicated()]
-#         
-#         TU_with_TSS_df.to_csv(output_file +f'/tmp/6.columns-fully-corrected.{strand_map[strand]}.bed',sep = '\t',index = None)
-# #         df_full_correct = TU_with_TSS_df
-#         ##7 Isoform deconvolution
-#         df_full_correct['new-name'] = TU_with_TSS_df['Transcriptional-unit'] +'-TSS_group.'+TU_with_TSS_df['TSS-group'].astype(str)
-#         ## New unique name for reads
-# #         TU_with_TSS_df.to_csv(output_file +f'/tmp/6.TEST_top_TSS_FILTER.{strand_map[strand]}.bed',sep = '\t',index = None)
-# #### TOP TSS per TU FILTER 
-#         retain_TU = []
-#         print(len(set(df_full_correct['new-name'])))
-#         for i in set(df_full_correct['new-name']):
-#             current_df = df_full_correct[df_full_correct['new-name'] == i]
-#             most_abundant_TSS_count = current_df['thickstart'].value_counts().head(1).to_list()[0]
-#             if most_abundant_TSS_count > max_TSS_per_CPAS:
-#                 retain_TU.append(i)
-#         df_full_correct = df_full_correct[df_full_correct['new-name'].isin(retain_TU)]
-#         print(len(set(df_full_correct['new-name'])))
-# 
-# 
-# 
-#         ## Get sum of each blocksizes and abundance of each 
-#         df_full_correct['blocksize-sum'] = blocksize_processing.get_blocksize_length(df_full_correct['blocksizes.new'])
-# 
-#         df_final = iso_deconv.iso_deconv(df_full_correct,isoform_grouping_val,blocksizesum_noise_filter)
-# 
-#         # colnames = ['chrom','start','end','name','score','strand','thickstart','thickend','itemRGB','blockcount','blocksizes.new','blockstarts']
-# #         df_final = df_final[~df_final['blocksizes.new'].duplicated()]
-# #         df_final[colnames].to_csv(f'Ad5.nocorrection.{strand_map[strand]}.bed',sep = '\t',header = None,index = None)
-# #         print(len(set(df_final['blocksizes.new'])))
-#         
-#         ######### TU BASED FILTERING 
-# #         df_final =df_final.merge(filter_cigar[['sequence','soft_clip_values']],left_on = 'name',right_on='sequence')
-# #         median_vals = df_final.groupby('new-name').soft_clip_values.agg('median')
-# 
-#         
-# #         df_final = df_final.merge(median_vals,left_on='new-name',right_on='new-name')
-# 
-#         df_final.to_csv(output_file +f'/tmp/7.Isoform-deconvolution.{strand_map[strand]}.bed',sep = '\t',index = None)
-# 
-#         Final_df = post_pro.dataframe_editing(df_final)
-# #         print(len(set(Final_df['blocksizes.new'])))
-#         Final_df = Final_df.sort_values(by=['end','start','blocksizes'])
-#         
-#         Final_df.to_csv(output_file+'/Final_cluster.precollapsed.' + strand_map[strand]+'.tsv',sep ='\t',index = None)
-#         most_common_df = pd.DataFrame()
-#         for i in set(Final_df['full-id']):
-#             current_df = Final_df[Final_df['full-id']==i]
-#             top_blocksize = current_df.value_counts('blocksizes.new').head(1).index[0]
-#             current_df = current_df[current_df['blocksizes.new'] == top_blocksize]
-#             top_blockstart = current_df.value_counts('blockstarts').head(1).index[0]
-#             current_df = current_df[current_df['blockstarts'] == top_blockstart].head(1)
-#             most_common_df = pd.concat([most_common_df,current_df])
-# #         most_common_df = pd.DataFrame()
-# #         for i in set(Final_df['full-id']):
-# #             current_df = Final_df[Final_df['full-id']==i]
-# # 
-# #             current_df = current_df.sort_values(by='splicing-count',ascending = False).head(1)
-# #             most_common_df = pd.concat([most_common_df,current_df])
-# #         most_common_df[colnames].to_csv(f'most-common-df.{strand_map[strand]}.7.bed',sep ='\t',index = None)
-#         filtering_counts += f"Number of isoforms identified:\t {len(set(most_common_df['full-id']))}\n"
-# 
-#         most_common_df = most_common_df[most_common_df['TSS-abundance-per-TU'] > TSS_abundance_per_TU]
-#         filtering_counts += f"Number of isoforms identified which pass TSS abundance per TU filter:\t {len(set(most_common_df['full-id']))}\n"
-#         most_common_df = most_common_df[most_common_df['score'] > min_transcript_abundance]
-#         filtering_counts += f"Number of isoforms identified which pass minimum transcript count:\t {len(set(most_common_df['full-id']))}\n\n\n"
-#         
-#         most_common_df['name'] = most_common_df['name'] + '--' + most_common_df['TSS-abundance-per-TU'].astype(str)
-#         most_common_df = most_common_df.sort_values( by=['start','end','blockcount'])
-#         most_common_df[colnames].to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.bed',sep ='\t',index = None,header = None)
-#         gff3_file = bed_convert.run_BED2GFF3(most_common_df[colnames])
-#         gff3_file['feature-start'] = gff3_file['feature-start'] + 1 
-# #         print(gff3_file.sort_values(by = ['feature-start','feature-end']).head(50))
-#         gff3_file.sort_values(by = ['feature-start','feature-end']).to_csv(output_file+'/Final_cluster.NAGATA.' + strand_map[strand]+'.gff3',sep = '\t',index = None,header = None)
-#         
-# #         processing_file = open(f"{output_file}/Filtering-counts.{strand_map[strand]}.txt","w")
-# # 
-# # 
-# #         processing_file.write(filtering_counts)
-# # 
-# #         processing_file.close() #to change file access modes
-#         known_bed = args[reference_files_scoring[strand]]
-#         if known_bed != None:
-#             print(known_bed)
-#             nagata_annot = most_common_df[colnames]
-#             known_df = pd.read_csv(known_bed,sep ='\t')
-# #             print(known_df.head())
-#             nagata_file =output_file+'/Final_cluster.' + strand_map[strand]+'.bed'
-#             output_file_by_strand = output_file + '/overlap.' + strand_map[strand]
-#             post_scoring.run_overlap_scoring(output_file_by_strand,nagata_file,known_bed,50,20)
-#     if known_bed != None:
-#         forward_overlap_score = pd.read_csv(output_file+'/overlap.' + 'fwd/' +'overlap-performance.txt',sep = '\t',names = ['class','forward'])
-# #         print(forward_overlap_score)
-#         reverse_overlap_score = pd.read_csv(output_file+'/overlap.' + 'rev/' +'overlap-performance.txt',sep = '\t',names = ['class','reverse'])
-# 
-#         merged_scores = forward_overlap_score.merge(reverse_overlap_score,left_on='class',right_on='class')
-#         merged_scores['total-overlap'] = merged_scores['forward'] + merged_scores['reverse']
-#         merged_scores.to_csv(output_file+'/merged_scoring.txt',sep = '\t',index = None)
-#         print(merged_scores)
-# processing_file = open(f"{output_file}/Filtering-counts.txt","w")
-# 
-# 
-# processing_file.write(filtering_counts)
-# 
-# processing_file.close() #to change file access modes
-        
         
         
