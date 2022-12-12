@@ -269,8 +269,16 @@ if __name__ == '__main__':
             nagata_file =output_file+'/Final_cluster.' + strand_map[strand]+'.bed'
             output_file_by_strand = output_file + '/overlap.' + strand_map[strand]
             final_output_overlap, nagata_specific, annotation_specific = post_scoring.run_overlap_scoring(output_file_by_strand,nagata_file,known_bed,50,20)
-            
-            gff3_file_overlap = bed_convert.run_BED2GFF3(final_output_overlap,'4C33FF')
+#             print(dict(zip(final_output_overlap[3],final_output_overlap[15])))
+            NAGATA_known_mapping = dict(zip(final_output_overlap[3],final_output_overlap[15]))
+            test_outputs = {k:k.replace('--',f'--{v}--')for k,v in NAGATA_known_mapping.items()}
+#             print(test_outputs)
+            #most_common_df['name'] = most_common_df['name'].map(test_outputs)
+            #df.replace({"col1": di})
+            nagata_annot = nagata_annot.replace({'name':test_outputs})
+            nagata_annot['name'] = nagata_annot['name'] + '--' + nagata_annot['score'].astype(str)
+            nagata_annot.to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.bed',sep ='\t',index = None,header = None)
+            gff3_file_overlap = bed_convert.run_BED2GFF3(final_output_overlap[[0,1,2,3,4,5,6,7,8,9,10,11]],'4C33FF')
             gff3_file_nagata = bed_convert.run_BED2GFF3(nagata_specific,'FF3333')
             gff3_file_annotation = bed_convert.run_BED2GFF3(annotation_specific,'B0AEAE')
             

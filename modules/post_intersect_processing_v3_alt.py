@@ -130,7 +130,7 @@ def run_overlap_scoring(output_file,nagata_file,annotation_file,overlap_paramete
     final_output_overlap = pd.concat([tmp_df_multiple,tmp_df_single])
     final_output_overlap = final_output_overlap[~final_output_overlap[3].duplicated()]
     final_output_overlap.sort_values(by=[1,2,9]).to_csv(output_file + '/NAGATA-Annotation.overlaps.bed',sep ='\t',index = None,header = None)
-    return final_output_overlap[[0,1,2,3,4,5,6,7,8,9,10,11]], nagata_overlaps, annotation_overlaps
+    return final_output_overlap, nagata_overlaps, annotation_overlaps
 #     output_overlaps_df.to_csv(output_file + '/NAGATA-Annotation.overlaps.bed',sep ='\t',index = None,header = None)
     
 if __name__ == '__main__':
