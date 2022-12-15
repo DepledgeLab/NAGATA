@@ -96,14 +96,16 @@ if __name__ == '__main__':
     requiredGrp = ap.add_argument_group('required arguments')
     requiredGrp.add_argument("-i",'--input_file', required=True, help="Bed12 file input location")
     requiredGrp.add_argument("-o",'--output_location', required=True, help="output file location")
+    requiredGrp.add_argument("-c",'--color', required=True, help="output file location")
     args = vars(ap.parse_args())
     input_file = args['input_file']
     output_file = args['output_location']
+    color = args['color']
 
 
     #### Handled in main function
     df = pd.read_csv(input_file,sep = '\t',header = None)
 #    df[12] = [i.split('-')[0] for i in df[3]]
-    final_df = run_BED2GFF3(df)
+    final_df = run_BED2GFF3(df,color)
     ####
     final_df.to_csv(output_file,sep = '\t',index = None,header = None)

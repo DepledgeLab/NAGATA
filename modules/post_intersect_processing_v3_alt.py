@@ -107,7 +107,7 @@ def run_overlap_scoring(output_file,nagata_file,annotation_file,overlap_paramete
     nagata_overlaps = nagata_df[~nagata_df[3].isin(list(output_overlaps_df[3]))]
 
     annotation_overlaps = annotation_df[~annotation_df[3].isin(list(output_overlaps_df[15]))]
-
+    nagata_overlaps[3] = nagata_overlaps[3] + '--' + nagata_overlaps[4].astype(str)
     nagata_overlaps.to_csv(output_file + '/NAGATA-specific.bed',sep ='\t',index = None,header = None)
     annotation_overlaps.to_csv(output_file + '/Annotation-specific.bed',sep ='\t',index = None,header = None)
     output_string = 'Validated\t' + str(output_overlaps_df.shape[0]) + '\n' + 'Not_annotated\t' + str(nagata_overlaps.shape[0]) + '\n' + 'Not_detected\t' + str(annotation_overlaps.shape[0]) 
@@ -129,7 +129,7 @@ def run_overlap_scoring(output_file,nagata_file,annotation_file,overlap_paramete
     tmp_df_multiple[15] = tmp_df_multiple[3].map(overlap_dict)
     final_output_overlap = pd.concat([tmp_df_multiple,tmp_df_single])
     final_output_overlap = final_output_overlap[~final_output_overlap[3].duplicated()]
-    final_output_overlap.sort_values(by=[1,2,9]).to_csv(output_file + '/NAGATA-Annotation.overlaps.bed',sep ='\t',index = None,header = None)
+    #final_output_overlap.sort_values(by=[1,2,9]).to_csv(output_file + '/NAGATA-Annotation.overlaps.bed',sep ='\t',index = None,header = None)
     return final_output_overlap, nagata_overlaps, annotation_overlaps
 #     output_overlaps_df.to_csv(output_file + '/NAGATA-Annotation.overlaps.bed',sep ='\t',index = None,header = None)
     

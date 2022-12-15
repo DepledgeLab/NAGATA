@@ -278,6 +278,13 @@ if __name__ == '__main__':
             nagata_annot = nagata_annot.replace({'name':test_outputs})
             nagata_annot['name'] = nagata_annot['name'] + '--' + nagata_annot['score'].astype(str)
             nagata_annot.to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.bed',sep ='\t',index = None,header = None)
+            #rint('DICTIONARY',test_outputs)
+            #print('NAGATA_annot',nagata_annot)
+            final_output_overlap = final_output_overlap.replace({3:test_outputs})
+            final_output_overlap[3] = final_output_overlap[3] + '--' + final_output_overlap[4].astype(str)
+            final_output_overlap.sort_values(by=[1,2,9]).to_csv(output_file_by_strand + '/NAGATA-Annotation.overlaps.bed',sep ='\t',index = None,header = None)
+            #print('final_output_overlap',final_output_overlap[[0,1,2,3,4,5,6,7,8,9,10,11]])
+            
             gff3_file_overlap = bed_convert.run_BED2GFF3(final_output_overlap[[0,1,2,3,4,5,6,7,8,9,10,11]],'4C33FF')
             gff3_file_nagata = bed_convert.run_BED2GFF3(nagata_specific,'FF3333')
             gff3_file_annotation = bed_convert.run_BED2GFF3(annotation_specific,'B0AEAE')
