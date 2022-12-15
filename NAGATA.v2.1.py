@@ -50,6 +50,7 @@ if __name__ == '__main__':
 #     requiredGrp.add_argument("-pc",'--padding_CPAS', required=False, help="After defining a CPAS, get the most abundant CPAS value and include +/-pc in the subsequent analysis,  (default 10) ",default = 10,type = int)
     requiredGrp.add_argument("-r1",'--reference_bed_f', required=False, help="reference beds for scoring",default = None,type = str)
     requiredGrp.add_argument("-r2",'--reference_bed_r', required=False, help="reference beds for scoring",default = None,type = str)
+    requiredGrp.add_argument("-d",'--strands', required=False, help="specify if interested in only forward (+) or reverse (-) strand",default = ['+','-'],type = list)
 #     requiredGrp.add_argument("-oe",'--override_existing', required=False, help="reference beds for scoring",default = False,type = bool)
     
     args = vars(ap.parse_args())
@@ -71,6 +72,7 @@ if __name__ == '__main__':
     TSS_abundance_per_TU = float(args['TSS_abundance_per_TU'])
     np_tag = str(args['nanopolish_tag'])
     blocksizesum_noise_filter = int(args['blocksize_noise_filter'])
+    strands = list(args['strands'])
 #     max_TSS_per_CPAS = int(args['max_TSS_per_CPAS'])
 #     padding_TSS = int(args['padding_TSS'])
 #     padding_CPAS = int(args['padding_CPAS'])
@@ -95,10 +97,10 @@ if __name__ == '__main__':
     final_counts = pd.DataFrame()
     #full_cluster_df = pd.DataFrame()
     filtering_counts = ""
-    
+    #strands  = pd.read_csv(output_file +'/tmp/' + '1.raw-alignment.bed',sep = '\t',header = None,usecols = [5])
+    #print('STRANDS',type(strands))
     #df = pd.read_csv(input_file,sep ='\t',header = None,names = colnames)
-    for strand in ['+','-']:
-        
+    for strand in strands:
         if strand == '-':
             colnames = ['chrom','end','start','name','score','strand','thickend','thickstart','itemRGB','blockcount','blocksizes','blockstarts']
             if is_bam:
@@ -300,7 +302,7 @@ if __name__ == '__main__':
 #             print('OVERLAPS',gff3_file_overlap)
 #             print('NAGATA',gff3_file_nagata)
 #             print('ANNOTATION',annotation_overlaps)
-    if known_bed != None:
+    if known_bed != None and len(strands) == 2:
         forward_overlap_score = pd.read_csv(output_file+'/overlap.' + 'fwd/' +'overlap-performance.txt',sep = '\t',names = ['class','forward'])
 #         print(forward_overlap_score)
         reverse_overlap_score = pd.read_csv(output_file+'/overlap.' + 'rev/' +'overlap-performance.txt',sep = '\t',names = ['class','reverse'])
@@ -308,7 +310,12 @@ if __name__ == '__main__':
         merged_scores = forward_overlap_score.merge(reverse_overlap_score,left_on='class',right_on='class')
         merged_scores['total-overlap'] = merged_scores['forward'] + merged_scores['reverse']
         merged_scores.to_csv(output_file+'/merged_scoring.txt',sep = '\t',index = None)
-        print(merged_scores)
+    elif strands == ['+']:
+        forward_overlap_score = pd.read_csv(output_file+'/overlap.' + 'fwd/' +'overlap-performance.txt',sep = '\t',names = ['class','forward'])
+        print(forward_overlap_score)
+    elif strands == ['-']:
+        reverse_overlap_score = pd.read_csv(output_file+'/overlap.' + 'rev/' +'overlap-performance.txt',sep = '\t',names = ['class','reverse'])
+        print(forward_overlap_score)
 processing_file = open(f"{output_file}/Filtering-counts.txt","w")
 
 
