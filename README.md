@@ -58,13 +58,13 @@ TES_pad      CPAS peak is defined by most abundant CPAS in TU, (+/- TES_pad) are
 
 ## ***NAGATA outputs***
 Using the commands detailed in the "Running NAGATA" section on the test data should produce:
-
+```
 (1) Final_cluster.strand'.bed                    BED12 format file detailing all transcript isoforms identified
 (2) Final_cluster.NAGATA.'strand'.gff3           Final_cluster.'strand'.bed converted in GFF3 file
 (3) NAGATA-parameters.tsv                        List of all parameters used for this run
 (4) Filtering-counts.txt                         Details on how many alignments/reads are being filtered at each step
 (5) Final_cluster.precollapsed.'strand'.tsv      A precollapsed version of Final_cluster.'strand'.bed which 
-
+```
 When used with the test dataset and default parameters, NAGATA should identify 26 transcripts (22 forward strand, 4 reverse strand) with a total runtime of < 1 min
 ```
 NAGATA also produces a series of intermediary files to aid in optimisation/troubleshooting. These are stored in a tmp/ directory within the main output directory specified by the -o flag.
