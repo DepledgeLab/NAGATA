@@ -1,5 +1,5 @@
 # NAGATA
-***Nanopore Guided Annotation of Transcriptome Architectures***
+**Nanopore Guided Annotation of Transcriptome Architectures**
 
 NAGATA uses Nanopore direct RNA sequencing reads aligned to a genome to produce a transcriptome annotation.
 
@@ -9,7 +9,8 @@ MiniMap2 v2.15 or higher\
 SAMtools v1.3 or higher\
 BEDtools v2.26 or v2.27
 
-## Required data inputs (for detailed information on how to generate required data inputs, please read the data preparation section)
+## Required data inputs 
+####(for detailed information on how to generate required data inputs, please read the data preparation section)
 ### ***BAM file***
 #### BAM files are used to cluster sequences based on alignment similarities in an iterative manner. 
 NAGATA parses read alignments to identify Transcriptional Units (TUs) by internally converting BAM file into BED12 followed by numerically sorting "start" and "end" positions and then grouping alignments with similar "start" and "end" co-ordinates. This is performed on a row-by-row basis with a new TU defined only if the alignment co-ordinates of a given row differ from the previous row by greater than user-defined threshold (20 nt for transcription start sites (TSS), 50 nt for cleavage and polyadenylation sites (CPAS)).  TSS threshold can be tuned using the -sg flag while the CPAS threshold can be control using the -eg flag.
@@ -84,7 +85,8 @@ seq-cigar-orient.tmp
 ```
 
 
-## Data preparation (generating high-quality genome-level alignments and divining estimates of poly(A) tail lengths)
+## Data preparation 
+#### (generating high-quality genome-level alignments and divining estimates of poly(A) tail lengths)
 In order to construct a transcriptome annotation, NAGATA requires, at minimum, a sorted BAM file containing DRS reads aligned against a reference genome. For optimal performance, we recommend (i) filtering aligned sequence reads to retain only primary alignments, and (ii) using nanopolish polya to exclude alignments originating from reads without well-supported polyA sequences.
 
 ### Alignment
