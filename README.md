@@ -19,7 +19,7 @@ git clone https://github.com/DepledgeLab/NAGATA
 ```
 
 ### Setting a python environment
-NAGATA requires multiple python packages and benefits from setting up a dedicted environment
+NAGATA requires multiple python packages and benefits from setting up a dedicated environment
 
 ```
 python3 -m venv NAGATA
