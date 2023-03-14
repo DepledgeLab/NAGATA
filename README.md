@@ -23,14 +23,14 @@ Once clustered have been identifed using "starts", NAGATA uses a similar algorit
 
 
 ## Installing NAGATA with git
-'''
+```
 git clone https://github.com/DepledgeLab/NAGATA
-'''
+```
 
 ### Setting a python environment
 NAGATA requires multiple python packages and benefits from setting up a dedicted environment
 
-'''
+```
 python3 -m venv NAGATA
 \# Activate environment 
 source NAGATA/bin/activate
@@ -40,7 +40,7 @@ pip install seaborn scipy pandas numpy biopython matplotlib
 
 \# Deactivate environment 
 deactivate
-'''
+```
 
 Conda enthusiasts may use the environment-setup.yml file and instructions detailed in [DRUMMER](https://github.com/DepledgeLab/DRUMMER)
 
