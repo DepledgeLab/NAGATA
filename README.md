@@ -15,11 +15,7 @@ BEDtools v2.26 or v2.27
 #### BAM files are used to cluster sequences based on alignment similarities in an iterative manner. 
 NAGATA parses read alignments to identify Transcriptional Units (TUs) by internally converting BAM file into BED12 followed by numerically sorting "start" and "end" positions and then grouping alignments with similar "start" and "end" co-ordinates. This is performed on a row-by-row basis with a new TU defined only if the alignment co-ordinates of a given row differ from the previous row by greater than user-defined threshold (20 nt for transcription start sites (TSS), 50 nt for cleavage and polyadenylation sites (CPAS)).
 
-![TSS-example](/modules/TSS-example.png)
-![Algorithm example](/modules/Grouping-TSS.pdf)
-
-Once clustered have been identifed using "starts", NAGATA uses a similar algorithm using "ends" within each cluster.
-![TES-example](/modules/TES-example.png)
+![schema](/docs/Schema.jpg)
 
 
 ## Installing NAGATA with git
