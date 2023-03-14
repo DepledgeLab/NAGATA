@@ -1,24 +1,19 @@
 # NAGATA
 **Nanopore Guided Annotation of Transcriptome Architectures**
 
-NAGATA uses Nanopore direct RNA sequencing reads aligned to a genome to produce a transcriptome annotation.
-
-## Required software
-Nanopolish v0.11.1 or higher\
-MiniMap2 v2.15 or higher\
-SAMtools v1.3 or higher\
-BEDtools v2.26 or v2.27
-
-## Required data inputs 
-#### For detailed information on how to generate required data inputs, please read the data preparation section
-### ***BAM file***
-#### BAM files are used to cluster sequences based on alignment similarities in an iterative manner. 
-NAGATA parses read alignments to identify Transcriptional Units (TUs) by internally converting BAM file into BED12 followed by numerically sorting "start" and "end" positions and then grouping alignments with similar "start" and "end" co-ordinates. This is performed on a row-by-row basis with a new TU defined only if the alignment co-ordinates of a given row differ from the previous row by greater than user-defined threshold (20 nt for transcription start sites (TSS), 50 nt for cleavage and polyadenylation sites (CPAS)).
+NAGATA uses Nanopore direct RNA sequencing reads aligned to a genome to produce a transcriptome annotation. NAGATA functions by parsing read alignments (sorted BAM files) to identify Transcription Units (TUs) by internally converting BAM file into BED12 followed by numerically sorting "start" and "end" positions and then grouping alignments with similar "start" and "end" co-ordinates. This is performed on a row-by-row basis with a new TU defined only if the alignment co-ordinates of a given row differ from the previous row by greater than user-defined threshold (20 nt for transcription start sites (TSS), 50 nt for cleavage and polyadenylation sites (CPAS)).
 
 ![schema](/docs/Schema.jpg)
 
+## Installing NAGATA
+### Requirements
+Nanopolish v0.11.1 or higher\
+MiniMap2 v2.15 or higher\
+SAMtools v1.3 or higher\
+BEDtools v2.26 or higher\
+Python v3.7.0 or higher\
 
-## Installing NAGATA with git
+### Installing  with git
 ```
 git clone https://github.com/DepledgeLab/NAGATA
 ```
