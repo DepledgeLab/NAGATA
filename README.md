@@ -13,7 +13,7 @@ BEDtools v2.26 or v2.27
 #### For detailed information on how to generate required data inputs, please read the data preparation section
 ### ***BAM file***
 #### BAM files are used to cluster sequences based on alignment similarities in an iterative manner. 
-NAGATA parses read alignments to identify Transcriptional Units (TUs) by internally converting BAM file into BED12 followed by numerically sorting "start" and "end" positions and then grouping alignments with similar "start" and "end" co-ordinates. This is performed on a row-by-row basis with a new TU defined only if the alignment co-ordinates of a given row differ from the previous row by greater than user-defined threshold (20 nt for transcription start sites (TSS), 50 nt for cleavage and polyadenylation sites (CPAS)).  TSS threshold can be tuned using the -sg flag while the CPAS threshold can be control using the -eg flag.
+NAGATA parses read alignments to identify Transcriptional Units (TUs) by internally converting BAM file into BED12 followed by numerically sorting "start" and "end" positions and then grouping alignments with similar "start" and "end" co-ordinates. This is performed on a row-by-row basis with a new TU defined only if the alignment co-ordinates of a given row differ from the previous row by greater than user-defined threshold (20 nt for transcription start sites (TSS), 50 nt for cleavage and polyadenylation sites (CPAS)).
 
 ![TSS-example](/modules/TSS-example.png)
 ![Algorithm example](/modules/Grouping-TSS.pdf)
@@ -26,11 +26,14 @@ Once clustered have been identifed using "starts", NAGATA uses a similar algorit
 ### Environment setup
 For now creating an environment using directions detailed in [DRUMMER](https://github.com/DepledgeLab/DRUMMER) should suffice. 
 
-### Test command
+### Testing NAGATA
 ```
 python3 NAGATA.py -i test-dataset/Ad5.combined.05.subsampled.sorted.bam -n test-dataset/Ad5.subsample.nanopolish.tsv -o test-outs
-
 ```
+Using this command, NAGATA should identify XX transcripts (XX forward strand, X reverse strand) with a total runtime of < 1 min
+
+
+
 ### Required arguments
 ```
 -i      --input_file            BAM file containing reads aligned to reference genome
@@ -61,13 +64,14 @@ python3 NAGATA.py -i test-dataset/Ad5.combined.05.subsampled.sorted.bam -n test-
 ## ***NAGATA outputs***
 Using the commands detailed in the "Running NAGATA" section on the test data should produce:
 ```
-(1) Final_cluster.strand'.bed                    BED12 format file detailing all transcript isoforms identified
-(2) Final_cluster.NAGATA.'strand'.gff3           Final_cluster.'strand'.bed converted in GFF3 file
+(1) Final_cluster.strand'.bed                    BED12 format files detailing all transcript isoforms identified
+(2) Final_cluster.NAGATA.'strand'.gff3           Final_cluster.'strand'.bed converted into GFF3 files
 (3) NAGATA-parameters.tsv                        List of all parameters used for this run
 (4) Filtering-counts.txt                         Details on how many alignments/reads are being filtered at each step
 (5) Final_cluster.precollapsed.'strand'.tsv      A precollapsed version of Final_cluster.'strand'.bed which 
 ```
-When used with the test dataset and default parameters, NAGATA should identify 26 transcripts (22 forward strand, 4 reverse strand) with a total runtime of < 1 min
+
+
 ```
 NAGATA also produces a series of intermediary files to aid in optimisation/troubleshooting. These are stored in a tmp/ directory within the main output directory specified by the -o flag.
 
@@ -109,17 +113,23 @@ samtools index primary.aligned.sorted.bam
 ```
 
 ### Filtering for reads with robust poly(A) tails
-To identify and remove reads that might introduce artefacts in NAGATA, we perform a filtering step prior to alignment. Here, nanopolish is used to index-link reads in their fastq and fast5 formats, and subsequently to estimate the length and quality of the poly(A) tail present in each read. By default, NAGATA only considers reads for which nanopolish reports the poly(A) tail as 'PASS'
+To identify and remove reads that might introduce artefacts in NAGATA, we perform a filtering step prior to alignment. Here, nanopolish is used to index-link reads in their fastq and fast5 formats, and subsequently to estimate the length and quality of the poly(A) tail present in each read. By default, NAGATA only considers reads for which nanopolish reports the poly(A) tail as 'PASS'. Applying the nanopolish filter to retain only 'failed' reads (-nt N) may be useful for interrogating artefacts.
 ```
 nanopolish index -d DRS.reads.fast5/ DRS.reads.fastq
 nanopolish polya --threads="n" --reads=DRS.reads.fastq --bam=primary.aligned.bam --genome=ref.fasta > DRS.polyA.tsv
 ```
+### Preparing BED12 annotations files from existing GTF/GFF3 files
 
+
+If you are experiencing errors during conversion from GFF3 to BED12 then please validate you GFF3 file using a [GFF3validator](http://genometools.org/cgi-bin/gff3validator.cgi). 
 
 ## Parameter optimisation
-In most cases, running NAGATA with default input values will produce a high quality transcriptome. However, several parameters are sensitive to depth, particularly -t, -c, and -m. Here we outline strategies for visually inspecting NAGATA outputs to assist with parameter optimisation.
+In many cases, running NAGATA with default input values will produce a high quality transcriptome. However, several parameters are sensitive to depth, particularly -t, -c, and -m. Here we outline strategies for visually inspecting NAGATA outputs to assist with parameter optimisation.
 
-### Choosing a value for -t
+### Choosing a value for -t/-c
+The optimal values for these parameters may be influenced by sequencing depth and/or the overall transcriptome structure. For instance, the -t parameter which influences the TSS noise threshold prior to TSS grouping may lead to incorrectly grouping adjacent TSSs at too low of a value or eliminated lesser abundant TSSs at higher values. The -t parameter has a direct impact on the -tg parameter, which defines how adjacent TSS positions are grouped. At too low of a value, there is an increased chance NAGATA defines incorrect TSS values, while a high value may lead to the merging of adjacent TSSs. By initially visualizing the data, the user may identify the robust TSS/CPAS position, and define noise/clustering parameters appropriately. 
+
+
 
 ### Choosing a value for -c 
 
