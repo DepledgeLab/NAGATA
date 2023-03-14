@@ -145,8 +145,6 @@ Note that the behaviour of -t/-c is linked to -tg/-cg. In the below example, (1)
 ![Collapse](/docs/Collapse.jpg)
 
 
-### Choosing a value for -m
-
 
 ## Troubleshooting
 Over time we will populate this section with advice on troubleshooting. For now, if you have a problem, please re-read the documentation carefully and if that doesn't help, raise an issue and we will respond as soon as possible.
