@@ -22,17 +22,34 @@ Once clustered have been identifed using "starts", NAGATA uses a similar algorit
 ![TES-example](/modules/TES-example.png)
 
 
-## Running NAGATA
-### Environment setup
-For now creating an environment using directions detailed in [DRUMMER](https://github.com/DepledgeLab/DRUMMER) should suffice. 
+## Installing NAGATA with git
+'''
+git clone https://github.com/DepledgeLab/NAGATA
+'''
 
+### Setting a python environment
+NAGATA requires multiple python packages and benefits from setting up a dedicted environment
+'''
+python3 -m venv NAGATA
+
+### Activate environment 
+source NAGATA/bin/activate
+
+### Install dependencies 
+pip install seaborn scipy pandas numpy biopython matplotlib
+
+### Deactivate environment 
+deactivate
+'''
+Conda enthusiasts may use the environment-setup.yml file and instructions detailed in [DRUMMER](https://github.com/DepledgeLab/DRUMMER)
+
+
+## Running NAGATA
 ### Testing NAGATA
 ```
 python3 NAGATA.py -i test-dataset/Ad5.combined.05.subsampled.sorted.bam -n test-dataset/Ad5.subsample.nanopolish.tsv -o test-outs
 ```
 Using this command, NAGATA should identify XX transcripts (XX forward strand, X reverse strand) with a total runtime of < 1 min
-
-
 
 ### Required arguments
 ```
