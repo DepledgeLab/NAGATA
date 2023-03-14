@@ -129,10 +129,12 @@ In many cases, running NAGATA with default input values will produce a high qual
 ### Choosing a value for -t/-c
 The optimal values for these parameters may be influenced by sequencing depth and/or the overall transcriptome structure. For instance, the -t parameter which influences the TSS noise threshold prior to TSS grouping may lead to incorrectly grouping adjacent TSSs at too low of a value or eliminated lesser abundant TSSs at higher values. The -t parameter has a direct impact on the -tg parameter, which defines how adjacent TSS positions are grouped. At too low of a value, there is an increased chance NAGATA defines incorrect TSS values, while a high value may lead to the merging of adjacent TSSs. By initially visualizing the data, the user may identify the robust TSS/CPAS position, and define noise/clustering parameters appropriately. 
 
-![TSS-example](/docs/NoiseFilter.jpg)
+![NoiseFilter](/docs/NoiseFilter.jpg)
 
+Note that the behaviour of -t/-c is linked to -tg/-cg. In the below example, (1) the abundance of reads with 5' alignments at the same position are counted and filtered according to the specified -t value to remove noise and identify clusters. Subsequently (2), the highest value within a cluster is identified and, (3) for each cluster, all positions within a range specified by -tg are corrected to the position of the most abundant position. The same behaviour applies to the -c/-cg flags, the only difference being this is performed at the 3' end of read alignments. 
 
-### Choosing a value for -c 
+![Collapse](/docs/Collapse.jpg)
+
 
 ### Choosing a value for -m
 
