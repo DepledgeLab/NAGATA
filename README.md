@@ -32,13 +32,13 @@ NAGATA requires multiple python packages and benefits from setting up a dedicted
 
 ```
 python3 -m venv NAGATA
-\# Activate environment 
+# Activate environment 
 source NAGATA/bin/activate
 
-\# Install dependencies 
+# Install dependencies 
 pip install seaborn scipy pandas numpy biopython matplotlib
 
-\# Deactivate environment 
+# Deactivate environment 
 deactivate
 ```
 
