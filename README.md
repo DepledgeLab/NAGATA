@@ -31,28 +31,30 @@ For now creating an environment using directions detailed in [DRUMMER](https://g
 python3 NAGATA.py -i test-dataset/Ad5.combined.05.subsampled.sorted.bam -n test-dataset/Ad5.subsample.nanopolish.tsv -o test-outs
 
 ```
-### Required Flags
+### Required arguments
 ```
 -i      --input_file            BAM file containing reads aligned to reference genome
 -o      --output_directory      Output directory 
--p      --polya                 Nanopolish output file containing poly(A) length estimates
 ```
-### Optional Flags
+### Optional arguments (basic)
 ```
--c      --CPAS_noise_filter     Ignore CPAS that have an abundance count < c (default: XX)
--cg     --CPAS_clustering       Grouping value (int) for CPASs to be considered within same cluster (default: 50)
--sg     Grouping value (int) for TSSs to be considered within same cluster (default: 20)
--c      Soft clipping value to filter lower quality reads (default: 12.5)
--m      Minimum number of reads a Transcriptional unit (TU) must have to be considered "real" (default: 20)
--mi     Minimum number of reads a transcript isoforms needs to be considered "real" (default: 5)
--pc     Within a TU, if the most abundant TSS does not have at least (pc) of reads, this TU is ignored (default: .25)
--TSS_pad     TSS peak is defined by most abundant TSS in TU, (+/- TSS_pad) are used to include surrounding reads and subsequently corrected for more reads(default 12)
-TES_pad      CPAS peak is defined by most abundant CPAS in TU, (+/- TES_pad) are used to include surrounding reads and subsequently corrected for more reads(default 25)
--b     Output bedgraph coverage data for each transcript isoform to file (default: False) 
--s     Initially filter out TSS sites that have a count <s (default: 3)
--p     Initially filter out CPAS sites that have a count <c (default: 1)
--f     Value to distinguish isoforms of the same TU, i.e. if sizes of transcripts (of the same exon count) fall within f, these transcripts are considered the same (default: 10)
--t     How to apply nanopolish filter, retain reads P (PASS), N (NO_PASS), A (N + P, all reads) (default: P)
+-p      --polya                     Nanopolish file containing poly(A) length estimates
+-nt     --nanopolish_tag            How to filter nanopolish file: P - retain PASS reads only, N - retain only reads that do not PASS, A - retain all reads (default: P)
+-s      --soft_clip_filter          Remove alignments with 5' soft-clipping values greater than specified value (default: 3)
+-c      --CPAS_noise_filter         Ignore CPAS that have an abundance count < c (default: 20)
+-t      --TSS_noise_filter          Ignore TSS that have an abundance count < t (default: 4)
+-m      --min_transcript_abundance  minimum transcript abundance (default: 3)
+-r1     --reference_bed_f           BED12 file containing existing annotation of forward strand (see XXX)
+-r2     --reference_bed_r           BED12 file containing existing annotation of reverse strand (see XXX)
+-d      --strand                    specify strand as '+', '-', or 'both' (default: both)
+```
+### Optional arguments (advanced)
+```
+-cg     --CPAS_clustering           Grouping value for clustering CPAS (default: 50)
+-tg     --TSS_clustering            Grouping value for clustering TSS (default: 20)
+-iso    --isoform_clustering        Grouping value for blockSize and blockStarts (default: 50)
+-a      --TSS_abundance_per_TU      TSS abundance per transcription unit (default: 0.1)
+-b      --blocksize_noise_filter    Prior to isoform deconvolution - filter out low abundant blocksize sums to prevent incorrect daisy chaining, (default: 3)
 ```
 
 
