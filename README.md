@@ -11,7 +11,7 @@ Nanopolish v0.11.1 or higher\
 MiniMap2 v2.15 or higher\
 SAMtools v1.3 or higher\
 BEDtools v2.26 or higher\
-Python v3.7.0 or higher\
+Python v3.7.0 or higher
 
 ### Installing  with git
 ```
@@ -84,19 +84,17 @@ Using the commands detailed in the "Running NAGATA" section on the test data sho
 ```
 NAGATA also produces a series of intermediary files to aid in optimisation/troubleshooting. These are stored in a tmp/ directory within the main output directory specified by the -o flag.
 
-1.raw-alignment.bed
-2.filter_nanopolish.'strand'.bed 
-3.filter_cigar.'strand'.bed
-4.CPAS-grouping.'strand'.bed
-5.TSS-grouping.'strand'.bed 
-6.columns-fully-corrected.'strand'.bed 
-7.Isoform-deconvolution.'strand'.bed 
+1.raw-alignment.bed - BED12 file generated from input BAM file
+2.filter_nanopolish.'strand'.bed - Modified BED12-type file containing only alignments for reads with confirmed poly(A) tail
+3.filter_cigar.'strand'.bed - Modified BED12-type file containing only alignments with 5' soft-clip values below cutoff
+4.CPAS-grouping.'strand'.bed - Modified BED12-type file containing final CPAS groupings and abundance counts
+5.TSS-grouping.'strand'.bed - Modified BED12-type file containing final TSS groupings and abundance counts
+6.columns-fully-corrected.'strand'.bed - Modified BED12-type file containing full corrected TSS and CPAS positions
+7.Isoform-deconvolution.'strand'.bed
 
-Correct.blocksizes.'strand'.bed
-Correct.TSS.CPAS.'strand'.bed
-parsed.cigar.'strand'.tsv
-Passed_NANOPOLISH.bed
-seq-cigar-orient.tmp
+parsed.cigar.'strand'.tsv - Sanity check to ensure that the soft-clipping filter step is working
+Passed_NANOPOLISH.bed - list of reads that are flagged as having poly(A) tails (nanopolish = PASS)
+seq-cigar-orient.tmp - The raw cigar string file extracted from the alignment. Contains all readnames, strandness, and cigar string.
 ```
 
 
@@ -128,9 +126,12 @@ nanopolish index -d DRS.reads.fast5/ DRS.reads.fastq
 nanopolish polya --threads="n" --reads=DRS.reads.fastq --bam=primary.aligned.bam --genome=ref.fasta > DRS.polyA.tsv
 ```
 ### Preparing BED12 annotations files from existing GTF/GFF3 files
-
-
+We recommend using [AGAT](https://github.com/NBISweden/AGAT) for file conversions. e.g.
+```
+agat_convert_sp_gff2bed.pl --gff input.gff3 -o output.bed
+```
 If you are experiencing errors during conversion from GFF3 to BED12 then please validate you GFF3 file using a [GFF3validator](http://genometools.org/cgi-bin/gff3validator.cgi). 
+Note also that NAGATA requires BED12 input files to be strand seperated.
 
 ## Parameter optimisation
 In many cases, running NAGATA with default input values will produce a high quality transcriptome. However, several parameters are sensitive to depth, particularly -t, -c, and -m. Here we outline strategies for visually inspecting NAGATA outputs to assist with parameter optimisation.
@@ -148,7 +149,6 @@ Note that the behaviour of -t/-c is linked to -tg/-cg. In the below example, (1)
 
 ## Troubleshooting
 Over time we will populate this section with advice on troubleshooting. For now, if you have a problem, please re-read the documentation carefully and if that doesn't help, raise an issue and we will respond as soon as possible.
-
 
 
 
