@@ -84,17 +84,17 @@ Using the commands detailed in the "Running NAGATA" section on the test data sho
 ```
 NAGATA also produces a series of intermediary files to aid in optimisation/troubleshooting. These are stored in a tmp/ directory within the main output directory specified by the -o flag.
 
-1.raw-alignment.bed - BED12 file generated from input BAM file
-2.filter_nanopolish.'strand'.bed - Modified BED12-type file containing only alignments for reads with confirmed poly(A) tail
-3.filter_cigar.'strand'.bed - Modified BED12-type file containing only alignments with 5' soft-clip values below cutoff
-4.CPAS-grouping.'strand'.bed - Modified BED12-type file containing final CPAS groupings and abundance counts
-5.TSS-grouping.'strand'.bed - Modified BED12-type file containing final TSS groupings and abundance counts
-6.columns-fully-corrected.'strand'.bed - Modified BED12-type file containing full corrected TSS and CPAS positions
+1.raw-alignment.bed                           BED12 file generated from input BAM file
+2.filter_nanopolish.'strand'.bed              Modified BED12-type file containing only alignments for reads with confirmed poly(A) tail
+3.filter_cigar.'strand'.bed                   Modified BED12-type file containing only alignments with 5' soft-clip values below cutoff
+4.CPAS-grouping.'strand'.bed                  Modified BED12-type file containing final CPAS groupings and abundance counts
+5.TSS-grouping.'strand'.bed                   Modified BED12-type file containing final TSS groupings and abundance counts
+6.columns-fully-corrected.'strand'.bed        Modified BED12-type file containing full corrected TSS and CPAS positions
 7.Isoform-deconvolution.'strand'.bed
 
-parsed.cigar.'strand'.tsv - Sanity check to ensure that the soft-clipping filter step is working
-Passed_NANOPOLISH.bed - list of reads that are flagged as having poly(A) tails (nanopolish = PASS)
-seq-cigar-orient.tmp - The raw cigar string file extracted from the alignment. Contains all readnames, strandness, and cigar string.
+parsed.cigar.'strand'.tsv                     Sanity check to ensure that the soft-clipping filter step is working
+Passed_NANOPOLISH.bed                         List of reads that are flagged as having poly(A) tails (nanopolish = PASS)
+seq-cigar-orient.tmp                          The raw cigar string file extracted from the alignment. Contains all readnames, strandness, and cigar string.
 ```
 
 
