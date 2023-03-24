@@ -39,9 +39,9 @@ Conda enthusiasts may use the environment-setup.yml file and instructions detail
 ## Running NAGATA
 ### Testing NAGATA
 ```
-python3 NAGATA.py -i test-dataset/Ad5.combined.05.subsampled.sorted.bam -n test-dataset/Ad5.subsample.nanopolish.tsv -o test-outs
+python3 NAGATA.py -i test-dataset/Ad5.combined.05.subsampled.sorted.bam -n test-dataset/Ad5.subsample.nanopolish.tsv -o test-outs -t 10 -c 50
 ```
-Using this command, NAGATA should identify XX transcripts (XX forward strand, X reverse strand) with a total runtime of < 1 min
+Using this command, NAGATA should identify 32 transcripts (29 forward strand, 3 reverse strand) with a total runtime of < 1 min
 
 ### Required arguments
 ```
