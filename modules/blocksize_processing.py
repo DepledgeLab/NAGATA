@@ -1,30 +1,44 @@
 import pandas as pd
 
-def correct_last(df:'DataFrame') -> 'DataFrame':
+def correct_last(df:'DataFrame',strand) -> 'DataFrame':
 	"""Takes in dataframe returns a corrected blocksizes column with respect to 
 	corresponding CPAS-diff value . CPAS-diff is the difference between most abundant 
 	CPAS in TU and this read's CPAS value
 	"""
 	new_blocksizes = []
-	for correction,blocksizes in list(zip(df['CPAS-diff'],df['blocksizes'])):
-		parse_blocks = list(map(int,blocksizes.split(',')))
-		parse_blocks[-1]+= correction
-		parse_blocks = ','.join(list(map(str,parse_blocks)))
-		new_blocksizes.append(parse_blocks)
+	if strand == "-":
+		for correction,blocksizes in list(zip(df['CPAS-diff'],df['blocksizes'])):
+			parse_blocks = list(map(int,blocksizes.split(',')))
+			parse_blocks[0] -= correction
+			parse_blocks = ','.join(list(map(str,parse_blocks)))
+			new_blocksizes.append(parse_blocks)
+	else:
+		for correction,blocksizes in list(zip(df['CPAS-diff'],df['blocksizes'])):
+			parse_blocks = list(map(int,blocksizes.split(',')))
+			parse_blocks[-1]+= correction
+			parse_blocks = ','.join(list(map(str,parse_blocks)))
+			new_blocksizes.append(parse_blocks)
 	df['blocksizes.new'] = new_blocksizes
 	return df
 
-def correct_first(df:'DataFrame')-> 'DataFrame':
+def correct_first(df:'DataFrame',strand)-> 'DataFrame':
 	"""Takes in dataframe returns a corrected blocksizes column with respect to 
 	corresponding TSS-diff value . CPAS-diff is the difference between most abundant 
 	TSS in TU and this read's TSS value
 	"""
 	new_blocksizes = []
-	for correction,blocksizes in list(zip(df['TSS-diff'],df['blocksizes.new'])):
-		parse_blocks = list(map(int,blocksizes.split(',')))
-		parse_blocks[0]-= correction
-		parse_blocks = ','.join(list(map(str,parse_blocks)))
-		new_blocksizes.append(parse_blocks)
+	if strand == "-":
+		for correction,blocksizes in list(zip(df['TSS-diff'],df['blocksizes.new'])):
+			parse_blocks = list(map(int,blocksizes.split(',')))
+			parse_blocks[-1]+= correction
+			parse_blocks = ','.join(list(map(str,parse_blocks)))
+			new_blocksizes.append(parse_blocks)
+	else:
+		for correction,blocksizes in list(zip(df['TSS-diff'],df['blocksizes.new'])):
+			parse_blocks = list(map(int,blocksizes.split(',')))
+			parse_blocks[0]-= correction
+			parse_blocks = ','.join(list(map(str,parse_blocks)))
+			new_blocksizes.append(parse_blocks)
 	df['blocksizes.new'] = new_blocksizes
 	return df
 

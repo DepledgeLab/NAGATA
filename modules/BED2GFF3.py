@@ -101,10 +101,14 @@ if __name__ == '__main__':
     input_file = args['input_file']
     output_file = args['output_location']
     color = args['color']
+    print("whatever")
 
 
     #### Handled in main function
     df = pd.read_csv(input_file,sep = '\t',header = None)
+    df[10] = df[10].apply(lambda x:x.strip(","))
+    df[11] = df[11].apply(lambda x:x.strip(","))
+    print(df)
 #    df[12] = [i.split('-')[0] for i in df[3]]
     final_df = run_BED2GFF3(df,color)
     ####

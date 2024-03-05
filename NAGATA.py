@@ -49,13 +49,10 @@ if __name__ == '__main__':
     optional_basic.add_argument("-m",metavar='min_transcript_abundance', required=False, help="minimum transcript abundance, (default 3 )",default = 3,type = int)
     optional_advanced.add_argument("-a",metavar='TSS_abundance_per_TU', help="TSS abundance per transcriptional unit, (default 0.1)",default = 0.1,type = float)
     optional_advanced.add_argument("-b",metavar='blocksize_noise_filter', help="Prior to isoform deconvolution - filter out low abundant blocksize sums to prevent incorrect daisy chainging, (default 3)",default = 3,type = float)
-#     requiredGrp.add_argument("-pm",'--max_TSS_per_CPAS', required=False, help="After defining CPAS, get the top TSS of each and filter out if it fails to each this threshold, (default 50) ",default = 50,type = int)
-#     requiredGrp.add_argument("-pt",'--padding_TSS', required=False, help="After defining a TSS with CPAS, get the most abundant TSS value and include +/-pc in the subsequent analysis, (default 10) ",default = 30,type = int)
-#     requiredGrp.add_argument("-pc",'--padding_CPAS', required=False, help="After defining a CPAS, get the most abundant CPAS value and include +/-pc in the subsequent analysis,  (default 10) ",default = 10,type = int)
     optional_basic.add_argument("-r1",metavar='reference_bed_f', required=False, help="BED file containing existing annotation (forward strand)",default = None,type = str)
     optional_basic.add_argument("-r2",metavar='reference_bed_r', required=False, help="BED file containing existing annotation (reverse strand)",default = None,type = str)
     optional_basic.add_argument("-d",metavar='strand', help="specify if interested in only forward (+) or reverse (-) strand, (default both)",default = ['+','-'],type = list)
-#     requiredGrp.add_argument("-oe",'--override_existing', required=False, help="reference beds for scoring",default = False,type = bool)
+
     
     args = vars(ap.parse_args())
     parameters_df = pd.DataFrame.from_dict(args, orient='index')
@@ -78,10 +75,6 @@ if __name__ == '__main__':
     np_tag = str(args['nt'])
     blocksizesum_noise_filter = int(args['b'])
     strands = list(args['d'])
-#     max_TSS_per_CPAS = int(args['max_TSS_per_CPAS'])
-#     padding_TSS = int(args['padding_TSS'])
-#     padding_CPAS = int(args['padding_CPAS'])
-#     override_existing = bool(args['override_existing'])
     known_beds_f = args['r1']
     known_beds_r = args['r2']
     ##The bool() function is not recommended as a type converter. All it does is convert empty strings to False and non-empty strings to True. This is usually not what is desired.
@@ -100,11 +93,9 @@ if __name__ == '__main__':
         passed_polyA = polyA[polyA['qc_tag'] =='PASS']
         passed_polyA.to_csv(output_file +f'/tmp/Passed_NANOPOLISH.bed',sep = '\t',index = None)
     final_counts = pd.DataFrame()
-    #full_cluster_df = pd.DataFrame()
+
     filtering_counts = ""
-    #strands  = pd.read_csv(output_file +'/tmp/' + '1.raw-alignment.bed',sep = '\t',header = None,usecols = [5])
-    #print('STRANDS',type(strands))
-    #df = pd.read_csv(input_file,sep ='\t',header = None,names = colnames)
+
     for strand in strands:
         if strand == '-':
             colnames = ['chrom','end','start','name','score','strand','thickend','thickstart','itemRGB','blockcount','blocksizes','blockstarts']
@@ -121,100 +112,162 @@ if __name__ == '__main__':
                 df = pd.read_csv(input_file,sep = '\t',header = None,names = colnames)
 #                 print('HERE +')
         print(f'Currently processing {strand_map[strand]} strand...\n')
-        # filtering_counts = ""
-            
-#         df = pd.read_csv(output_file +'/tmp/' + 'raw-alignment.2.bed',sep = '\t',header = None,names = colnames_fwd)
+
         ##1 Filter for relevant strand
         df = df[df['strand'] ==strand]
+        # print("raw-count",df.shape)
         filtering_counts += f'{strand_map[strand]} strand...\nTotal input reads:\t {df.shape[0]}\n'
         ##2 Filter for sequences that contain a PASS for nanopolish
         if nanopolish_path != None:
-#             passed_polyA = polyA[polyA['qc_tag'] =='PASS']
-#             passed_polyA.to_csv(output_file +f'/tmp/Passed_NANOPOLISH.{strand_map[strand]}.2.bed',sep = '\t',index = None)
-            df = df[df['name'].isin(passed_polyA['readname'].to_list())]
+            
+            df = df.merge(passed_polyA,left_on ="name", right_on ="readname",how = "left").drop(["readname"],axis =1)
+            
+            df["qc_tag"] = df["qc_tag"].fillna("fail-nanopolish")
             df.to_csv(output_file +f'/tmp/2.filter_nanopolish.{strand_map[strand]}.bed',sep = '\t',index = None)
-        filtering_counts += f'Reads with readable polyA tail:\t {df.shape[0]}\n'
+        if nanopolish_path == None:
+            print(nanopolish_path)
+            df["qc_tag"] = "PASS"
+
+        filtering_counts += f'Reads with readable polyA tail:\t {df[df["qc_tag"]!="fail-nanopolish"].shape[0]}\n'
         ##3 Cigar string filter
         if is_bam:
             filter_cigar,cigar_df = TSS_soft_clip_filter.filter_sequences(cigar_file_path,cigar_filter_val,strand)
+            # print(filter_cigar.shape)
             cigar_df.to_csv(output_file +f'/tmp/parsed.cigar.{strand_map[strand]}.tsv',sep = '\t',index = None)
-#             print(cigar_df.head())
-#             filter_cigar.to_csv(output_file +f'/tmp/2.filter_cigar.{strand_map[strand]}.bed',sep = '\t',index = None)
-            df = df[df['name'].isin(filter_cigar['sequence'].to_list())]
-            df.to_csv(output_file +f'/tmp/3.filter_cigar.{strand_map[strand]}.bed',sep = '\t',index = None)
-        filtering_counts += f"Reads with acceptable 5\' alignment:\t {df.shape[0]}\n\n"
-        ##4 Filter low abundant CPAS followed by CPAS daisy chaining
+            df = df.merge(filter_cigar[["sequence","soft_clip_values"]],left_on ="name", right_on ="sequence",how = "left").drop(["sequence"],axis =1)
+            df["soft_clip_values"] = df["soft_clip_values"].fillna("fail-soft-clip")
 
-        CPAS_pass = CPAS_processing.filter_CPAS_noise(df['end'],CPAS_noise_filter)
+        print("total size",df.shape)
+
+        df_fail3 = df[(df["qc_tag"]== "fail-nanopolish") & (df["soft_clip_values"]!= "fail-soft-clip")]
+        df_fail5 = df[(df["qc_tag"]!= "fail-nanopolish") & (df["soft_clip_values"]== "fail-soft-clip")]
+        df_failboth = df[(df["qc_tag"]== "fail-nanopolish") & (df["soft_clip_values"]== "fail-soft-clip")]
+        df_passboth = df[(df["qc_tag"]!= "fail-nanopolish") & (df["soft_clip_values"]!= "fail-soft-clip")]
+
+        df.to_csv(output_file +f'/tmp/3.filter_cigar.{strand_map[strand]}.bed',sep = '\t',index = None)
+        filtering_counts += f"Reads with acceptable 5\' alignment:\t {df.shape[0]}\n\n"
+
+        ##4 Filter low abundant CPAS followed by CPAS daisy chaining
+        df_3_define = pd.concat([df_passboth,df_fail5])
+
+
+        CPAS_pass = CPAS_processing.filter_CPAS_noise(df_3_define['end'],CPAS_noise_filter)
         CPAS_groups = helpers.identify_daisy_chain_groups(sorted(map(int,CPAS_pass.keys())),CPAS_grouping_val)
-#         print(CPAS_groups)
-#         print(CPAS_groups)
+
         new_CPAS_groups = []
         for i in CPAS_groups:
-            df_identified_groups = df[df['end'].isin(i)]
-#             print(i)
+            df_identified_groups = df_3_define[(df_3_define['end'].isin(i)) ]
             most_abundant_cpas = df_identified_groups['end'].value_counts().head(1).index[0]
-            tmp_df = df.copy()
-            tmp_df['absolute_end'] = abs(df['end']-most_abundant_cpas)
+            tmp_df = df_3_define.copy()
+            tmp_df['absolute_end'] = abs(tmp_df['end']-most_abundant_cpas)
 
             tmp_df = tmp_df[tmp_df['absolute_end'] <= CPAS_grouping_val/2]
             new_CPAS_groups.append(sorted(set(tmp_df['end'])))
-#             updated_df = pd.concat([updated_df,tmp_df])
-#             print(tmp_df['end'].value_counts())
-#         print(new_CPAS_groups)
         swapped_ends = helpers.swap_key_vals(dict(enumerate(new_CPAS_groups,1)))
-        df['Transcriptional-unit'] = df['end'].astype(int).map(swapped_ends)
-        df = df[df['Transcriptional-unit'].notna()]
-        df['Transcriptional-unit'] = 'TU.' + df['Transcriptional-unit'].astype(int).astype(str)
-        most_abund_CPAS_in_groups = dict(df.groupby('Transcriptional-unit')['end'].agg(lambda handle_multiple_modes: pd.Series.mode(handle_multiple_modes)[0]))
-        df['most_abund_CPAS'] = df['Transcriptional-unit'].map(most_abund_CPAS_in_groups)       
+        df_3_define['Transcriptional-unit'] = df_3_define['end'].astype(int).map(swapped_ends)
+        df_3_define = df_3_define[df_3_define['Transcriptional-unit'].notna()]
+        df_3_define['Transcriptional-unit'] = 'TU.' + df_3_define['Transcriptional-unit'].astype(int).astype(str)
+        most_abund_CPAS_in_groups = dict(df_3_define.groupby('Transcriptional-unit')['end'].agg(lambda handle_multiple_modes: pd.Series.mode(handle_multiple_modes)[0]))
+        df_3_define['most_abund_CPAS'] = df_3_define['Transcriptional-unit'].map(most_abund_CPAS_in_groups)       
         filtering_counts += f"Reads remaining after CPAS noise filter:\t {df.shape[0]} \n"
-        filtering_counts += f"Number of transcription units (CPAS) identified:\t {len(set(df['Transcriptional-unit']))}\n\n"
-#         df.to_csv(output_file +f'/tmp/4.CPAS-grouping.{strand_map[strand]}.bed',sep = '\t',index = None)
-        df['TU-count']= df['Transcriptional-unit'].map(df['Transcriptional-unit'].value_counts())
-        df.to_csv(output_file +f'/tmp/4.CPAS-grouping.{strand_map[strand]}.bed',sep = '\t',index = None)
-#         x = [22355, 22362, 22363, 22364, 22366, 22367, 22368, 22369, 22370, 22371, 22372, 22373, 22374, 22375, 22376, 22377, 22378, 22379, 22380, 22381, 22382, 22383, 22384, 22386, 22387, 22388, 22390, 22391, 22392, 22396, 22397]
+        filtering_counts += f"Number of transcription units (CPAS) identified:\t {len(set(df_3_define['Transcriptional-unit']))}\n\n"
+        df_3_define['TU-count']= df_3_define['Transcriptional-unit'].map(df_3_define['Transcriptional-unit'].value_counts())
+        df_3_define.to_csv(output_file +f'/tmp/4.CPAS-grouping.{strand_map[strand]}.bed',sep = '\t',index = None)
 
-#         print(Counter(df['start']),'\n')
-        TSS_pass = CPAS_processing.filter_CPAS_noise(df['start'],TSS_noise_filter)
+
+        df_5_define = pd.concat([df_passboth,df_fail3])
+        TSS_pass = CPAS_processing.filter_CPAS_noise(df_5_define['start'],TSS_noise_filter)
         TSS_groups = helpers.identify_daisy_chain_groups(sorted(map(int,TSS_pass.keys())),TSS_grouping_val)
-#         print(Counter(TSS_pass),'\n')
-        # print(TSS_groups,'\n')
+
         new_TSS_groups = []
         for i in TSS_groups:
-            df_identified_groups = df[df['start'].isin(i)]
-#             print(i)
+            df_identified_groups = df_5_define[df_5_define['start'].isin(i)]
             most_abundant_tss = df_identified_groups['start'].value_counts().head(1).index[0]
-            tmp_df = df.copy()
-            tmp_df['absolute_start'] = abs(df['start']-most_abundant_tss)
+            tmp_df = df_5_define.copy()
+            tmp_df['absolute_start'] = abs(df_5_define['start']-most_abundant_tss)
 
             tmp_df = tmp_df[tmp_df['absolute_start'] <= TSS_grouping_val/2]
             new_TSS_groups.append(sorted(set(tmp_df['start'])))        
-#         print('CPAS groups:',new_CPAS_groups)
         swapped_starts = helpers.swap_key_vals(dict(enumerate(new_TSS_groups,1)))
-        df['TSS-unit'] = df['start'].astype(int).map(swapped_starts)
-        df = df[df['TSS-unit'].notna()]
-        df['TSS-unit'] = 'TSS.' + df['TSS-unit'].astype(int).astype(str)
-        most_abund_TSS_in_groups = dict(df.groupby('TSS-unit')['start'].agg(lambda handle_multiple_modes: pd.Series.mode(handle_multiple_modes)[0]))
-        df['most_abund_TSS'] = df['TSS-unit'].map(most_abund_TSS_in_groups)
-        df['TSS-count']= df['TSS-unit'].map(df['TSS-unit'].value_counts()) 
-        df.to_csv(output_file +f'/tmp/5.TSS-grouping.{strand_map[strand]}.bed',sep = '\t',index = None)   
+        df_5_define['TSS-unit'] = df_5_define['start'].astype(int).map(swapped_starts)
+        df_5_define = df_5_define[df_5_define['TSS-unit'].notna()]
+        df_5_define['TSS-unit'] = 'TSS.' + df_5_define['TSS-unit'].astype(int).astype(str)
+        most_abund_TSS_in_groups = dict(df_5_define.groupby('TSS-unit')['start'].agg(lambda handle_multiple_modes: pd.Series.mode(handle_multiple_modes)[0]))
+        df_5_define['most_abund_TSS'] = df_5_define['TSS-unit'].map(most_abund_TSS_in_groups)
+        df_5_define['TSS-count']= df_5_define['TSS-unit'].map(df_5_define['TSS-unit'].value_counts()) 
+        df_5_define.to_csv(output_file +f'/tmp/5.TSS-grouping.{strand_map[strand]}.bed',sep = '\t',index = None)   
+
+        ### TESTING new functionality
+        ## (1) Get most abundant TSS (2) Look into which intersect TSS from raw BED file 
+
+        df_5_define_abundant_TSS = df_5_define[["chrom","most_abund_TSS"]].drop_duplicates()
+        df_5_define_abundant_TSS["start"] = df_5_define_abundant_TSS["most_abund_TSS"] - 25
+        df_5_define_abundant_TSS["end"] = df_5_define_abundant_TSS["most_abund_TSS"] + 25
+        df_5_define_abundant_TSS = df_5_define_abundant_TSS.drop(["most_abund_TSS"],axis = 1)
+        df_5_define_abundant_TSS.to_csv(output_file +f'/tmp/most_abundant.TSSs.{strand_map[strand]}.bed',sep = '\t',index = None,header = None)
+        most_abundant_TSS_path = output_file +f'/tmp/most_abundant.TSSs.{strand_map[strand]}.bed'
+        df_most_abundant_TSS_path = open(output_file +'/tmp/' + '1.raw-alignment.TSS.bed','wb')
+
+
+        df_starts = df[['chrom','start']].drop_duplicates()
+        df_starts['end'] = df_starts['start']
+        df_starts.to_csv(output_file +f'/tmp/df_raw_tss.{strand_map[strand]}.bed',sep="\t",header = None,index = None)
+        raw_file_path = output_file +f'/tmp/df_raw_tss.{strand_map[strand]}.bed'
         
+        bedtools_p1 = f"bedtools intersect -wb -a {raw_file_path} -b {most_abundant_TSS_path}".split(" ")
+        bedtools_p2 = subprocess.run(bedtools_p1,stdout=df_most_abundant_TSS_path)
+
+        # print(df_3_define)
+        df_3_define_abundant_cpas = df_3_define[["chrom","most_abund_CPAS"]].drop_duplicates()
+        df_3_define_abundant_cpas["start"] = df_3_define_abundant_cpas["most_abund_CPAS"] - 25
+        df_3_define_abundant_cpas["end"] = df_3_define_abundant_cpas["most_abund_CPAS"] + 25
+        df_3_define_abundant_cpas = df_3_define_abundant_cpas.drop(["most_abund_CPAS"],axis = 1)
+        most_abundant_cpas_path = output_file +f'/tmp/most_abundant.CPASs.{strand_map[strand]}.bed'
+        df_3_define_abundant_cpas.to_csv(most_abundant_cpas_path,sep = '\t',index = None,header = None)
+        
+        df_most_abundant_CPAS_path = open(output_file +'/tmp/' + '1.raw-alignment.CPAS.bed','wb')
+
+        df_end = df[['chrom','end']].drop_duplicates()
+
+        df_end['start'] = df_end['end']
+        raw_file_path_cpas = output_file +f'/tmp/df_raw_cpas.{strand_map[strand]}.bed'
+        df_end.to_csv(raw_file_path_cpas,sep="\t",header = None,index = None)
+        
+        bedtools_p1 = f"bedtools intersect -wb -a {raw_file_path_cpas} -b {most_abundant_cpas_path}".split(" ")
+        bedtools_p2 = subprocess.run(bedtools_p1,stdout=df_most_abundant_CPAS_path)
+
+
+        overlaps_cpas = pd.read_csv(output_file +'/tmp/' + '1.raw-alignment.CPAS.bed',sep ="\t",usecols = [1,4],header = None,names = ["end","most_abund_CPAS"])
+        overlaps_tss = pd.read_csv(output_file +'/tmp/' + '1.raw-alignment.TSS.bed',sep ="\t",usecols = [1,4],header = None,names = ["start","most_abund_TSS"])
+        df = df.merge(overlaps_tss[["start"]],on = "start",how ="inner")
+        df = df.merge(overlaps_cpas[["end"]],on = "end",how ="inner")
+
+        df = df.merge(df_3_define[["end","Transcriptional-unit","most_abund_CPAS","TU-count"]].drop_duplicates(),on = "end",how = "inner")
+        df = df.merge(df_5_define[["start","most_abund_TSS","TSS-unit","TSS-count"]].drop_duplicates(),on = "start",how = "inner")
+
+
+
+
+
+        ###
+        print(df[(df["TSS-unit"]=="TSS.9") & (df["Transcriptional-unit"]=="TU.6") &(df["blockcount"] ==1) ])
+        df.to_csv(output_file +f'/tmp/Delete.Non-Corrected.TSS.CPAS.{strand_map[strand]}.bed',sep = '\t',index = None)  
         df['CPAS-diff'] = df['most_abund_CPAS'] - df['end']
         df['end'] = df['most_abund_CPAS']
         
         df['TSS-diff'] = df['most_abund_TSS'] - df['start']
         df['start'] = df['most_abund_TSS']
+ 
 
         df.to_csv(output_file +f'/tmp/Correct.TSS.CPAS.{strand_map[strand]}.bed',sep = '\t',index = None)  
 
 
-        df = blocksize_processing.correct_last(df) ###
+        df = blocksize_processing.correct_last(df,strand) ###
+        df = blocksize_processing.correct_first(df,strand)  ###
 
-        df = blocksize_processing.correct_first(df)  ###
         df_full_correct = df
 
-#         df_full_correct.to_csv(output_file +f'/tmp/Correct.blocksizes.{strand_map[strand]}.bed',sep = '\t',index = None)
+
         df_full_correct['new-name'] = df_full_correct['Transcriptional-unit'] +'-'+ df_full_correct['TSS-unit'].astype(str)
         df_full_correct.to_csv(output_file +f'/tmp/6.columns-fully-corrected.{strand_map[strand]}.bed',sep = '\t',index = None)
 
@@ -227,10 +280,10 @@ if __name__ == '__main__':
         df_final = iso_deconv.iso_deconv(df_full_correct,isoform_grouping_val,blocksizesum_noise_filter)
         df_final.to_csv(output_file +f'/tmp/7.Isoform-deconvolution.{strand_map[strand]}.bed',sep = '\t',index = None)
         Final_df = post_pro.dataframe_editing(df_final)
-#         print(len(set(Final_df['blocksizes.new'])))
+
         Final_df = Final_df.sort_values(by=['end','start','blocksizes'])
         
-#         Final_df.to_csv(output_file+'/Final_cluster.precollapsed.' + strand_map[strand]+'.tsv',sep ='\t',index = None)
+
         most_common_df = pd.DataFrame()
         for i in set(Final_df['full-id']):
             current_df = Final_df[Final_df['full-id']==i]
@@ -239,13 +292,7 @@ if __name__ == '__main__':
             top_blockstart = current_df.value_counts('blockstarts').head(1).index[0]
             current_df = current_df[current_df['blockstarts'] == top_blockstart].head(1)
             most_common_df = pd.concat([most_common_df,current_df])
-#         most_common_df = pd.DataFrame()
-#         for i in set(Final_df['full-id']):
-#             current_df = Final_df[Final_df['full-id']==i]
-# 
-#             current_df = current_df.sort_values(by='splicing-count',ascending = False).head(1)
-#             most_common_df = pd.concat([most_common_df,current_df])
-#         most_common_df[colnames].to_csv(f'most-common-df.{strand_map[strand]}.7.bed',sep ='\t',index = None)
+
         filtering_counts += f"Number of isoforms identified:\t {len(set(most_common_df['full-id']))}\n"
 
         most_common_df = most_common_df[most_common_df['TSS-abundance-per-TU'] >= TSS_abundance_per_TU]
@@ -258,39 +305,27 @@ if __name__ == '__main__':
         most_common_df[colnames].to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.bed',sep ='\t',index = None,header = None)
         gff3_file = bed_convert.run_BED2GFF3(most_common_df[colnames],None)
         gff3_file['feature-start'] = gff3_file['feature-start'] + 1 
-#         print(gff3_file.sort_values(by = ['feature-start','feature-end']).head(50))
+
         gff3_file.sort_values(by = ['feature-start','feature-end']).to_csv(output_file+'/Final_cluster.NAGATA.' + strand_map[strand]+'.gff3',sep = '\t',index = None,header = None)
         
-#         processing_file = open(f"{output_file}/Filtering-counts.{strand_map[strand]}.txt","w")
-# 
-# 
-#         processing_file.write(filtering_counts)
-# 
-#         processing_file.close() #to change file access modes
+
         known_bed = args[reference_files_scoring[strand]]
         if known_bed != None:
             print(known_bed)
             nagata_annot = most_common_df[colnames]
             known_df = pd.read_csv(known_bed,sep ='\t')
-#             print(known_df.head())
             nagata_file =output_file+'/Final_cluster.' + strand_map[strand]+'.bed'
             output_file_by_strand = output_file + '/overlap.' + strand_map[strand]
             final_output_overlap, nagata_specific, annotation_specific = post_scoring.run_overlap_scoring(output_file_by_strand,nagata_file,known_bed,50,20)
-#             print(dict(zip(final_output_overlap[3],final_output_overlap[15])))
             NAGATA_known_mapping = dict(zip(final_output_overlap[3],final_output_overlap[15]))
             test_outputs = {k:k.replace('--',f'--{v}--')for k,v in NAGATA_known_mapping.items()}
-#             print(test_outputs)
-            #most_common_df['name'] = most_common_df['name'].map(test_outputs)
-            #df.replace({"col1": di})
             nagata_annot = nagata_annot.replace({'name':test_outputs})
             nagata_annot['name'] = nagata_annot['name'] + '--' + nagata_annot['score'].astype(str)
             nagata_annot.to_csv(output_file+'/Final_cluster.' + strand_map[strand]+'.bed',sep ='\t',index = None,header = None)
-            #rint('DICTIONARY',test_outputs)
-            #print('NAGATA_annot',nagata_annot)
+
             final_output_overlap = final_output_overlap.replace({3:test_outputs})
             final_output_overlap[3] = final_output_overlap[3] + '--' + final_output_overlap[4].astype(str)
             final_output_overlap.sort_values(by=[1,2,9]).to_csv(output_file_by_strand + '/NAGATA-Annotation.overlaps.bed',sep ='\t',index = None,header = None)
-            #print('final_output_overlap',final_output_overlap[[0,1,2,3,4,5,6,7,8,9,10,11]])
             
             gff3_file_overlap = bed_convert.run_BED2GFF3(final_output_overlap[[0,1,2,3,4,5,6,7,8,9,10,11]],'4C33FF')
             gff3_file_nagata = bed_convert.run_BED2GFF3(nagata_specific,'FF3333')
@@ -304,9 +339,7 @@ if __name__ == '__main__':
             gff3_file_nagata.sort_values(by = ['feature-start','feature-end']).to_csv(output_file_by_strand+'/NAGATA.specific.' + strand_map[strand]+'.gff3',sep = '\t',index = None,header = None)
             gff3_file_annotation.sort_values(by = ['feature-start','feature-end']).to_csv(output_file_by_strand+'/Annotation.specific.' + strand_map[strand]+'.gff3',sep = '\t',index = None,header = None)
             print(output_file_by_strand)
-#             print('OVERLAPS',gff3_file_overlap)
-#             print('NAGATA',gff3_file_nagata)
-#             print('ANNOTATION',annotation_overlaps)
+
     if known_bed != None and len(strands) == 2:
         forward_overlap_score = pd.read_csv(output_file+'/overlap.' + 'fwd/' +'overlap-performance.txt',sep = '\t',names = ['class','forward'])
 #         print(forward_overlap_score)
