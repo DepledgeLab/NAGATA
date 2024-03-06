@@ -13,6 +13,7 @@ import modules.TSS_soft_clip_filter as TSS_soft_clip_filter
 import modules.BED2GFF3 as bed_convert
 import modules.post_intersect_processing_v3_alt as post_scoring
 import warnings
+import shutil
 ## Ignore warning dealing from "A value is trying to be set on a copy of a slice from a DataFrame..." 
 warnings.filterwarnings("ignore")
 
@@ -23,7 +24,7 @@ reference_files_scoring = {'+':'r1','-':'r2'}
 
 parsing_dictionary ={'input_file':'-i','output_directory':'-o', 'polya':'-p','soft_clip_filter':'-s','nanopolish_tag':'-nt','CPAS_noise_filter':'-c',
 'TSS_noise_filter':'-t', 'CPAS_clustering':'-cg','TSS_clustering':'-tg','isoform_clustering':'-iso','min_transcript_abundance':'-m','TSS_abundance_per_TU':'-a',
-'blocksize_noise_filter':'-b','reference_bed_f':'-r1','reference_bed_r':'-r2','max_TSS_per_CPAS':'-pm','padding_TSS':'-pt','padding_CPAS':'-pc'}
+'blocksize_noise_filter':'-b','reference_bed_f':'-r1','reference_bed_r':'-r2','max_TSS_per_CPAS':'-pm','padding_TSS':'-pt','padding_CPAS':'-pc','-tmp':'temporary_files'}
 
 
 if __name__ == '__main__':
@@ -52,14 +53,14 @@ if __name__ == '__main__':
     optional_basic.add_argument("-r1",metavar='reference_bed_f', required=False, help="BED file containing existing annotation (forward strand)",default = None,type = str)
     optional_basic.add_argument("-r2",metavar='reference_bed_r', required=False, help="BED file containing existing annotation (reverse strand)",default = None,type = str)
     optional_basic.add_argument("-d",metavar='strand', help="specify if interested in only forward (+) or reverse (-) strand, (default both)",default = ['+','-'],type = list)
+    optional_basic.add_argument("-tmp",metavar='temporary_files', help="output intermediate files to a tmp directory (default False)",default = False,type = str)
 
     
     args = vars(ap.parse_args())
     parameters_df = pd.DataFrame.from_dict(args, orient='index')
-#     print(parameters_df)
+
     parameters_df[1] = parameters_df.index
     parameters_df[2] = parameters_df[1].map(parsing_dictionary)
-#     print(parameters_df[[2,1,0]])
     
     input_file = args['i']
     output_file = args['o']
@@ -77,6 +78,7 @@ if __name__ == '__main__':
     strands = list(args['d'])
     known_beds_f = args['r1']
     known_beds_r = args['r2']
+    output_tmp_files = args["tmp"]
     ##The bool() function is not recommended as a type converter. All it does is convert empty strings to False and non-empty strings to True. This is usually not what is desired.
     print(input_file.split('.')[-1])
     is_bam = True
@@ -362,5 +364,7 @@ processing_file.write(filtering_counts)
 
 processing_file.close() #to change file access modes
 
-        
+if not output_tmp_files:
+    shutil.rmtree(output_file +f'/tmp/', ignore_errors=True)
+
         
