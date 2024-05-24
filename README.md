@@ -9,11 +9,13 @@ NAGATA uses Nanopore direct RNA sequencing reads aligned to a genome to produce 
 
 ## Installing NAGATA
 ### Requirements
+```
 Nanopolish v0.11.1 or higher\
 MiniMap2 v2.15 or higher\
 SAMtools v1.3 or higher\
 BEDtools v2.26 or higher\
 Python v3.7.0 or higher
+```
 
 ### Installing  with git
 ```
@@ -41,9 +43,9 @@ Conda enthusiasts may use the environment-setup.yml file and instructions detail
 ## Running NAGATA
 ### Testing NAGATA
 ```
-python3 NAGATA.py -i test-dataset/Ad5.combined.05.subsampled.sorted.bam -n test-dataset/Ad5.subsample.nanopolish.tsv -o test-outs -t 10 -c 50
+python3 NAGATA.py -i test-dataset/Ad5.combined.05.subsampled.sorted.bam -n test-dataset/Ad5.subsample.nanopolish.tsv -o test-outs -t 20 -c 50
 ```
-Using this command, NAGATA should identify 32 transcripts (29 forward strand, 3 reverse strand) with a total runtime of < 1 min
+Using this command, NAGATA should identify 37 transcripts (35 forward strand, 5 reverse strand) with a total runtime of < 1 min
 
 ### Required arguments
 ```
@@ -61,6 +63,7 @@ Using this command, NAGATA should identify 32 transcripts (29 forward strand, 3 
 -r1     --reference_bed_f           BED12 file containing existing annotation of forward strand (see XXX)
 -r2     --reference_bed_r           BED12 file containing existing annotation of reverse strand (see XXX)
 -d      --strand                    specify strand as '+', '-', or 'both' (default: both)
+-tmp    --temporary_files           output intermediate files in the tmp directory (true / false) (default false)
 ```
 ### Optional arguments (advanced)
 ```
@@ -77,14 +80,13 @@ Using the commands detailed in the "Running NAGATA" section on the test data sho
 ```
 (1) Final_cluster.strand'.bed                    BED12 format files detailing all transcript isoforms identified
 (2) Final_cluster.NAGATA.'strand'.gff3           Final_cluster.'strand'.bed converted into GFF3 files
-(3) NAGATA-parameters.tsv                        List of all parameters used for this run
+(3) parameters.tsv                               List of all parameters used for this run
 (4) Filtering-counts.txt                         Details on how many alignments/reads are being filtered at each step
-(5) Final_cluster.precollapsed.'strand'.tsv      A precollapsed version of Final_cluster.'strand'.bed which 
 ```
 
 
 ```
-NAGATA also produces a series of intermediary files to aid in optimisation/troubleshooting. These are stored in a tmp/ directory within the main output directory specified by the -o flag.
+NAGATA produces a series of intermediary files which can aid in optimisation/troubleshooting. These are retained if the flag -tmp true is set. Outputs are stored in a tmp/ directory created within the main output directory specified by the -o flag.
 
 1.raw-alignment.bed                           BED12 file generated from input BAM file
 2.filter_nanopolish.'strand'.bed              Modified BED12-type file containing only alignments for reads with confirmed poly(A) tail
