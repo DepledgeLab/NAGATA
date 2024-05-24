@@ -1,8 +1,6 @@
 # NAGATA
 **Nanopore Guided Annotation of Transcriptome Architectures**
 
-*Update 29.03.23 - NAGATA is now live. A subfolder called annotations will be added in the next few days with our latest annotations of select viral genomes*
-
 NAGATA uses Nanopore direct RNA sequencing reads aligned to a genome to produce a transcriptome annotation. NAGATA functions by parsing read alignments (sorted BAM files) to identify Transcription Units (TUs) by internally converting BAM file into BED12 followed by numerically sorting "start" and "end" positions and then grouping alignments with similar "start" and "end" co-ordinates. This is performed on a row-by-row basis with a new TU defined only if the alignment co-ordinates of a given row differ from the previous row by greater than user-defined threshold (20 nt for transcription start sites (TSS), 50 nt for cleavage and polyadenylation sites (CPAS)).
 
 ![schema](/docs/Schema.jpg)
