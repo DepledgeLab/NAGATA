@@ -11,7 +11,7 @@ import modules.isoform_deconvolution as iso_deconv
 import modules.post_processing as post_pro
 import modules.TSS_soft_clip_filter as TSS_soft_clip_filter
 import modules.BED2GFF3 as bed_convert
-import modules.post_intersect_processing_v3_alt as post_scoring
+import modules.post_intersect_processing_v4.1 as post_scoring
 import warnings
 import shutil
 ## Ignore warning dealing from "A value is trying to be set on a copy of a slice from a DataFrame..." 
