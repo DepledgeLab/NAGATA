@@ -152,7 +152,10 @@ Note that the behaviour of -t/-c is linked to -tg/-cg. In the below example, (1)
 ## Troubleshooting
 Over time we will populate this section with advice on troubleshooting. For now, if you have a problem, please re-read the documentation carefully and if that doesn't help, raise an issue and we will respond as soon as possible.
 
+## Citation
+If you find this work useful, please cite:
 
+[Abebe JS, Alwie Y, Fuhrmann E, Leins J, Mai J, Verstraten R, Schreiner S, Wilson AC, Depledge DP. Nanopore guided annotation of transcriptome architectures. mSystems (2024) Jul 2:e0050524.](https://doi.org/10.1128/msystems.00505-24) 
 
 ## Wisdom
-Im ta nating
+<em> Im ta nating </em> - Naomi Nagata
